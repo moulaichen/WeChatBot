@@ -1,3 +1,5 @@
+import re
+
 import Api_Server.SparkApi as SparkApi
 from urllib.parse import urljoin
 from OutPut import OutPut
@@ -46,6 +48,7 @@ class Api_Main_Server:
         self.Key = config['Api_Server']['Api_Config']['Key']
         self.ThreatBook_Key = config['Api_Server']['Api_Config']['ThreatBook_Key']
         self.Pic_Apis = config['Api_Server']['Pic_Api']
+        self.longtu_Apis = config['Api_Server']['longtu_Api']
         self.Video_Apis = config['Api_Server']['Video_Api']
         self.Icp_Api = config['Api_Server']['Icp_Api']
         self.Attribution_Api = config['Api_Server']['Attribution_Api']
@@ -60,6 +63,8 @@ class Api_Main_Server:
         self.Somd5_Md5_url = config['Api_Server']['Somd5_Md5_Api']
         self.Somd5_Key = config['Api_Server']['Api_Config']['Somd5_Key']
         self.Dream_Api = config['Api_Server']['Dream_Api']
+        self.GPT3_Api = config['Api_Server']['Gpt_Api']
+        self.GPT4_Api = config['Api_Server']['Gpt_Api4']
         self.Port_Scan_Api = config['Api_Server']['Port_Scan_Api']
         # 星火配置
         self.Spark_url = config['Api_Server']['Ai_Config']['SparkApi']['Spark_url']
@@ -108,82 +113,159 @@ class Api_Main_Server:
                 del text[0]
             return text
 
-        # Gpt模型
         def getGpt(content):
-            self.messages.append({"role": "user", "content": f'{content}'})
-            data = {
-                "model": "gpt-3.5-turbo",
-                "messages": self.messages
-            }
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"{self.OpenAi_Key}",
-            }
+            OutPut.outPut('[*]: 正在调用gptAPI接口... ...')
+            dream = content.split(' ')[-1]
+            urlList = self.GPT3_Api
+            url = random.choice(urlList).format(dream)
+            # url = "http://api.yujn.cn/api/ff.php?msg=" + dream
+            msg = ''
             try:
-                resp = requests.post(url=self.OpenAi_Api, headers=headers, json=data, timeout=15)
-                json_data = resp.json()
-                assistant_content = json_data['choices'][0]['message']['content']
-                self.messages.append({"role": "assistant", "content": f"{assistant_content}"})
-                if len(self.messages) == 15:
-                    self.messages = [{"role": "system", "content": f"{self.OpenAi_Initiating_Message}"}]
-                return assistant_content
+                json_data = requests.get(url=url, timeout=30, verify=False)
+                if json_data.status_code != 200:
+                    msg = '叼毛一边去 忙着呢！！！'
+                    return msg
+                msg = json_data.text
+                if msg == "当前IP请求次数过多，请过两分钟后再试吧。":
+                    urlList = self.GPT4_Api
+                    url = random.choice(urlList).format(dream)
+                    json_data = requests.get(url=url, timeout=30, verify=False)
+                    if json_data.status_code != 200:
+                        msg = '叼毛一边去 忙着呢！！！'
+                        return msg
+                    msg = json_data.text
+                OutPut.outPut(f'[+]: gptAPI接口调用成功！！！')
+                return msg
             except Exception as e:
-                OutPut.outPut(f'[-]: AI对话接口出现错误，错误信息： {e}')
-                self.messages = [{"role": "system", "content": f"{self.OpenAi_Initiating_Message}"}]
-                return None
+                msg = f'[-]: gpt接口出现错误, 错误信息：{e}'
+                OutPut.outPut(msg)
 
-        # 星火大模型
-        def get_xh(question):
-            try:
-                OutPut.outPut(f'[+]: 正在调用星火大模型... ...')
-                question = checkLen(getText("user", question))
-                SparkApi.answer = ""
-                SparkApi.main(self.Spark_Appid, self.Spark_ApiKey, self.Spark_ApiSecret, self.Spark_url,
-                              self.Spark_Domain,
-                              question)
-                getText("assistant", SparkApi.answer)
-                Xh_Msg = SparkApi.get_content()
-                return Xh_Msg
-            except Exception as e:
-                OutPut.outPut(f'[-]: 星火大模型出现错误，错误信息: {e}')
-                return None
+        # def getElse():
+        #     OutPut.outPut('[*]: 正在调用gptAPI接口... ...')
+        #     url = self.GPT3_Api.format(dream)
+        #     msg = ''
+        #     try:
+        #         json_data = requests.get(url=url, timeout=30, verify=False)
+        #         if json_data.status_code != 200:
+        #             msg = '叼毛一边去 忙着呢！！！'
+        #             return msg
+        #         msg = json_data.text
+        #
+        #         OutPut.outPut(f'[+]: gptAPI接口调用成功！！！')
+        #         return msg
+        #     except Exception as e:
+        #         msg = f'[-]: gpt接口出现错误, 错误信息：{e}'
+        #         OutPut.outPut(msg)
 
-        # 千帆大模型
-        def get_qf(quest):
-            try:
-                OutPut.outPut(f'[*]: 正在调用千帆大模型... ...')
-                self.chat_mess.append(quest)
-                resp = self.chat_comp.do(messages=self.chat_mess)
-                self.chat_mess.append(resp)
-                accept_msg = resp['body']['result']
-                OutPut.outPut('[+]: Ai对话接口调用成功！！！')
-                return accept_msg
-            except Exception as e:
-                OutPut.outPut(f'[-]: 千帆大模型出现错误，错误信息: {e}')
-                return None
-
-        gpt_msg = getGpt(content=question)
+        # def getGpt(content):
+        #     self.messages.append({"role": "user", "content": f'{content}'})
+        #     data = {
+        #         "model": "gpt-3.5-turbo",
+        #         "messages": self.messages
+        #     }
+        #     headers = {
+        #         "Content-Type": "application/json",
+        #         "Authorization": f"{self.OpenAi_Key}",
+        #     }
+        #     try:
+        #         resp = requests.post(url=self.OpenAi_Api, headers=headers, json=data, timeout=15)
+        #         json_data = resp.json()
+        #         assistant_content = json_data['choices'][0]['message']['content']
+        #         self.messages.append({"role": "assistant", "content": f"{assistant_content}"})
+        #         if len(self.messages) == 15:
+        #             self.messages = [{"role": "system", "content": f"{self.OpenAi_Initiating_Message}"}]
+        #         return assistant_content
+        #     except Exception as e:
+        #         OutPut.outPut(f'[-]: AI对话接口出现错误，错误信息： {e}')
+        #         self.messages = [{"role": "system", "content": f"{self.OpenAi_Initiating_Message}"}]
+        #         return None
+        #
+        # # 星火大模型
+        # def get_xh(question):
+        #     try:
+        #         OutPut.outPut(f'[+]: 正在调用星火大模型... ...')
+        #         question = checkLen(getText("user", question))
+        #         SparkApi.answer = ""
+        #         SparkApi.main(self.Spark_Appid, self.Spark_ApiKey, self.Spark_ApiSecret, self.Spark_url,
+        #                       self.Spark_Domain,
+        #                       question)
+        #         getText("assistant", SparkApi.answer)
+        #         Xh_Msg = SparkApi.get_content()
+        #         return Xh_Msg
+        #     except Exception as e:
+        #         OutPut.outPut(f'[-]: 星火大模型出现错误，错误信息: {e}')
+        #         return None
+        #
+        # # 千帆大模型
+        # def get_qf(quest):
+        #     try:
+        #         OutPut.outPut(f'[*]: 正在调用千帆大模型... ...')
+        #         self.chat_mess.append(quest)
+        #         resp = self.chat_comp.do(messages=self.chat_mess)
+        #         self.chat_mess.append(resp)
+        #         accept_msg = resp['body']['result']
+        #         OutPut.outPut('[+]: Ai对话接口调用成功！！！')
+        #         return accept_msg
+        #     except Exception as e:
+        #         OutPut.outPut(f'[-]: 千帆大模型出现错误，错误信息: {e}')
+        #         return None
+        if not question:
+            gpt_msg = "叼毛 艾特我干嘛"
+        else:
+            gpt_msg = getGpt(content=question)
         if gpt_msg:
             OutPut.outPut('[+]: Ai对话接口调用成功！！！')
-            return gpt_msg
-        else:
-            try:
-                Xh_Msg = get_xh(question=question)
-            except Exception as e:
-                OutPut.outPut(f'[-]: 星火大模型出现错误，错误信息: {e}')
-                return None
-            if not Xh_Msg:
-                if not self.qf_ak:
-                    OutPut.outPut(f'[-]: 千帆模型接口未配置，其它模型出现错误，请查看日志！')
-                    return '千帆模型接口未配置，其它模型出现错误，请查看日志！'
-                return get_qf(quest=question)
-            else:
-                OutPut.outPut('[+]: Ai对话接口调用成功！！！')
-                return Xh_Msg
+            return re.sub(r'\s+$', '', gpt_msg)
+        # else:
+            # try:
+            #     Xh_Msg = get_xh(question=question)
+            # except Exception as e:
+            #     OutPut.outPut(f'[-]: 星火大模型出现错误，错误信息: {e}')
+            #     return None
+            # if not Xh_Msg:
+            #     if not self.qf_ak:
+            #         OutPut.outPut(f'[-]: 千帆模型接口未配置，其它模型出现错误，请查看日志！')
+            #         return '千帆模型接口未配置，其它模型出现错误，请查看日志！'
+            #     return get_qf(quest=question)
+            # else:
+            #     OutPut.outPut('[+]: Ai对话接口调用成功！！！')
+            #     return Xh_Msg
 
     # 美女图片
     def get_girl_pic(self):
         OutPut.outPut(f'[*]: 正在调用美女图片接口... ...')
+        url = random.choice(self.Pic_Apis)
+        save_path = self.Cache_path + '/Pic_Cache/' + str(int(time.time() * 1000)) + '.jpg'
+        try:
+            pic_data = requests.get(url=url, headers=self.headers, timeout=30, verify=False).content
+            with open(file=save_path, mode='wb') as pd:
+                pd.write(pic_data)
+        except Exception as e:
+            msg = f'[-]: 美女图片API接口出现错误，错误信息：{e}\n正在回调中... ...'
+            OutPut.outPut(msg)
+            save_path = self.get_girl_pic()
+        OutPut.outPut(f'[+]: 美女图片API接口调用成功！！！')
+        return save_path
+
+    # 龙图
+    def get_longtu_pic(self):
+        OutPut.outPut(f'[*]: 正在调用龙图图片接口... ...')
+        url = random.choice(self.longtu_Apis)
+        save_path = self.Cache_path + '/Pic_Cache/' + str(int(time.time() * 1000)) + '.jpg'
+        try:
+            pic_data = requests.get(url=url, headers=self.headers, timeout=30, verify=False).content
+            with open(file=save_path, mode='wb') as pd:
+                pd.write(pic_data)
+        except Exception as e:
+            msg = f'[-]: 龙图图片API接口出现错误，错误信息：{e}\n正在回调中... ...'
+            OutPut.outPut(msg)
+            save_path = self.get_longtu_pic()
+        OutPut.outPut(f'[+]: 龙图图片API接口调用成功！！！')
+        return save_path
+
+    # 搜索表情包
+    def get_sousuobiaoqing_pic(self):
+        OutPut.outPut(f'[*]: 正在调用搜索表情包接口... ...')
         url = random.choice(self.Pic_Apis)
         save_path = self.Cache_path + '/Pic_Cache/' + str(int(time.time() * 1000)) + '.jpg'
         try:

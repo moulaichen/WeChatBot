@@ -9,6 +9,11 @@ import os
 import re
 
 
+def contains_emoji_tag(text=str):
+    pattern = re.compile(r'<emoji.*?>.*?</emoji>', re.DOTALL)
+    return bool(pattern.search(text))
+
+
 class Room_Msg_Dispose:
     def __init__(self, wcf):
         self.wcf = wcf
@@ -189,6 +194,13 @@ class Room_Msg_Dispose:
                 self.wcf.send_image(path=save_path, receiver=msg.roomid)
             else:
                 self.wcf.send_text(msg='美女图片接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+        # 龙图
+        # if contains_emoji_tag(msg.content):
+        #     save_path = self.Ams.get_longtu_pic()
+        #     if 'Pic_Cache' in save_path:
+        #         self.wcf.send_image(path=save_path, receiver=msg.roomid)
+        #     else:
+        #         self.wcf.send_text(msg='龙图图片接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
         # 美女视频
         elif self.judge_keyword(keyword=self.Video_Words, msg=msg.content, list_bool=True, equal_bool=True):
             save_path = self.Ams.get_girl_video()
@@ -249,7 +261,8 @@ class Room_Msg_Dispose:
                 msg.content.strip())
             self.wcf.send_text(msg=dream_msg, receiver=msg.roomid, aters=msg.sender)
         # help帮助菜单
-        elif self.judge_keyword(keyword=self.HelpMenu_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True, split_bool=True):
+        elif self.judge_keyword(keyword=self.HelpMenu_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True,
+                                split_bool=True):
             Thread(target=self.get_help, name="Help帮助菜单", args=(msg,)).start()
         # 自定义回复
         Thread(target=self.custom_get, name="自定义回复", args=(msg,)).start()
@@ -356,26 +369,14 @@ class Room_Msg_Dispose:
         room_name = self.Dms.query_room_name(room_id=msg.roomid)
         wx_name = self.wcf.get_alias_in_chatroom(wxid=msg.sender, roomid=msg.roomid)
         if msg.sender in admin_dicts.keys() or msg.sender in self.administrators:
-            admin_msg = f'@{wx_name}\n您是尊贵的管理员/超级管理员，本次对话不扣除积分'
-            self.wcf.send_text(msg=admin_msg, receiver=msg.roomid, aters=msg.sender)
+            # admin_msg = f'@{wx_name}\n您是尊贵的管理员/超级管理员，本次对话不扣除积分'
+            # self.wcf.send_text(msg=admin_msg, receiver=msg.roomid, aters=msg.sender)
             use_msg = f'@{wx_name}\n' + self.Ams.get_ai(question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
             self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=msg.sender)
         # 不是管理员
         else:
-            if self.Dps.query_point(wx_id=msg.sender, wx_name=wx_name, room_id=msg.roomid, room_name=room_name) >= int(
-                    self.Ai_Point):
-                self.Dps.del_point(wx_id=msg.sender, wx_name=wx_name, room_id=msg.roomid, room_name=room_name,
-                                   point=int(self.Ai_Point))
-                now_point = self.Dps.query_point(wx_id=msg.sender, wx_name=wx_name, room_id=msg.roomid,
-                                                 room_name=room_name, )
-                point_msg = f'@{wx_name} 您使用了Ai对话功能，扣除您 {self.Ai_Point} 点积分,\n当前剩余积分: {now_point}'
-                self.wcf.send_text(msg=point_msg, receiver=msg.roomid, aters=msg.sender)
-                use_msg = f'@{wx_name}\n' + self.Ams.get_ai(
-                    question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
-                self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=msg.sender)
-            else:
-                send_msg = f'@{wx_name} 积分不足, 请求管理员或其它群友给你施舍点'
-                self.wcf.send_text(msg=send_msg, receiver=msg.roomid, aters=msg.sender)
+            use_msg = f'@{wx_name}\n' + self.Ams.get_ai(question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
+            self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=msg.sender)
 
     # Md5查询
     def get_md5(self, msg):
@@ -533,14 +534,14 @@ class Room_Msg_Dispose:
             print('公众号信息：', gh_id, gh_name)
             if not gh_id and not gh_name:
                 gh_name = re.search(r'sourcedisplayname&gt;(?P<gh_name>.*?)&lt;/sourcedisplayname&gt;',
-                                str(msg.content).strip(),
-                                re.DOTALL)
+                                    str(msg.content).strip(),
+                                    re.DOTALL)
                 gh_id = re.search(r'sourceusername&gt;(?P<gh_id>.*?)&lt;/sourceusername&gt;',
-                                str(msg.content).strip(),
-                                re.DOTALL)
+                                  str(msg.content).strip(),
+                                  re.DOTALL)
                 if not gh_name.group('gh_name'):
                     gh_name = re.search(r'&lt;appname&gt;(?P<gh_name>.*?)&lt;/appname&gt', str(msg.content).strip(),
-                                    re.DOTALL)
+                                        re.DOTALL)
                 if gh_name and gh_id:
                     gh_name = gh_name.group('gh_name')
                     gh_id = gh_id.group('gh_id')

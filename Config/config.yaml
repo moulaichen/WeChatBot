@@ -1,6 +1,7 @@
 ## 超级管理员配置
 Administrators:
-  - 'wxid_7bizfilssbwi22'
+  - 'wxid_6ozos2rfkizw22'
+  - 'wxid_hzicw1nyk8dy22'
 
 ## 系统配置
 System_Config:
@@ -20,13 +21,13 @@ Push_Config:
   # 下班推送时间设置
   Off_Work_Time: '18:00'
   # 摸鱼日记推送时间设置
-  Fish_Time: '10:00'
+  Fish_Time: '15:22'
   # KFC文案发送时间设置 每周四发送
   Kfc_Time: '11:50'
   # 定时功能回复配置
   Key_Word:
     # 下班消息 换行用\n 支持微信表情
-    Off_Work_Msg: '下班时间到！我要下班 我要下班 我要下班 下下下！\n到点即刻下班，给老板省去水电，给自己来套保健，给老板来句操蛋，出自: #NGC660安全实验室\n速速下班！！！[旺柴]'
+    Off_Work_Msg: '下班时间到！我要下班 我要下班 我要下班 下下下！\n到点即刻下班，给老板省去水电，给自己来套保健，给老板来句操蛋，\n速速下班！！！[旺柴]'
 
 ## 进群关键词配置
 Room_Key_Word:
@@ -285,11 +286,11 @@ Api_Server:
     # 千帆大模型
     QianFan:
       # 应用中的Api Key
-      Qf_Access_Key: ''
+      Qf_Access_Key: '4a4a11d86cfc5b48e8fbf10aa8251578'
       # 应用中的Secret Key
-      Qf_Secret_Key: ''
+      Qf_Secret_Key: 'ZGFhOGM3ODA3OWVjNjkwNDJjZjQwNWNl'
       # 应用中的应用ID
-      Qf_Appid: ''
+      Qf_Appid: '4e9b35f8'
 
 
   # 天气查询API
@@ -317,6 +318,7 @@ Api_Server:
   Icp_Api: 'https://v.api.aa1.cn/api/icp/index.php?url={}'
   # 周公解梦Api配置
   Dream_Api: 'https://apis.tianapi.com/dream/index?key={}&num=10&word={}'
+#  Gpt_Api: 'https://api.qtkj.love/api/ChatGPT.php?id=3205363979&message={}&type=text'
   # SOMD5解密API配置
   Somd5_Md5_Api: 'https://www.somd5.com/ss.php?api={}&hash={}'
   # Cmd5解密Api配置
@@ -330,12 +332,28 @@ Api_Server:
     - 'https://free.wqwlkj.cn/wqwlapi/ks_xjj.php'
     - 'https://tuapi.eees.cc/api.php?category=meinv&px=m&type=302'
     - 'http://lx.linxi.icu/API/meitui.php'
+  # 龙图
+  longtu_Api:
+    - 'https://api.yujn.cn/api/long.php?type=image'
+    - 'http://api.yujn.cn/api/cxk.php'
+    - 'http://api.yujn.cn/api/chaijun.php'
+
   # 视频API配置
   Video_Api:
-    - 'http://api.yujn.cn/api/heisis.php'
     - 'http://api.yujn.cn/api/xjj.php'
     - 'http://api.yujn.cn/api/zzxjj.php'
     - 'https://api.yujn.cn/api/manzhan.php'
+
+# Gpt
+  Gpt_Api:
+    - 'https://api.qtkj.love/api/ChatGPT.php?id=3205363979&message={}&type=text'
+    - 'http://api.yujn.cn/api/ff.php?msg={}'
+    - 'http://api.yujn.cn/api/moli.php?msg={}'
+
+# Gpt
+  Gpt_Api4:
+    - 'http://api.yujn.cn/api/ff.php?msg={}'
+    - 'http://api.yujn.cn/api/moli.php?msg={}'
 
 
 
