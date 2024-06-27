@@ -84,14 +84,14 @@ class Main_Server:
                 # 群消息处理
                 if msg.type == 10000:
                     OutPut.outPut(f'10000: {msg.content}')
-                    if msg.roomid in push_rooms.keys() and msg.roomid:
-                        # 进群欢迎
-                        Thread(target=self.Join_Room, name="进群欢迎", args=(msg,)).start()
-                    # 添加好友后回复
-                    elif msg.sender and not msg.roomid and ('添加了' in msg.content or '以上是打招呼的内容' in msg.content):
-                        Thread(target=self.Accept_Friend_Msg, name="加好友后自动回复", args=(msg,)).start()
-                    elif '收到红包，请在手机上查看' in msg.content and not msg.roomid:
-                        Thread(target=self.Fms.Msg_Dispose, name="好友消息处理", args=(msg,)).start()
+                    # if msg.roomid in push_rooms.keys() and msg.roomid:
+                    #     # 进群欢迎
+                    #     Thread(target=self.Join_Room, name="进群欢迎", args=(msg,)).start()
+                    # # 添加好友后回复
+                    # elif msg.sender and not msg.roomid and ('添加了' in msg.content or '以上是打招呼的内容' in msg.content):
+                    #     Thread(target=self.Accept_Friend_Msg, name="加好友后自动回复", args=(msg,)).start()
+                    # elif '收到红包，请在手机上查看' in msg.content and not msg.roomid:
+                    #     Thread(target=self.Fms.Msg_Dispose, name="好友消息处理", args=(msg,)).start()
                 # 好友申请消息处理
                 elif msg.type == 37:
                     # 自动同意好友申请

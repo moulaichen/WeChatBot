@@ -208,9 +208,9 @@ class Db_Main_Server:
             curser.execute(add_push_room_sql, (room_id, room_name,))
             conn.commit()
             self.close_db(conn, curser)
-            msg = f'[+]: 群聊【{room_name}】开启推送服务成功！！！ 由小刺猬转发的组队二维码会推送到群聊中 ~~'
+            msg = f' 群聊【{room_name}】开启推送服务成功！！！ 由小刺猬转发的组队二维码会推送到群聊中 ~~'
         else:
-            msg = f'[~]: 群聊【{room_name}】已开启推送服务'
+            msg = f' 群聊【{room_name}】已开启推送服务'
         OutPut.outPut(msg)
         return msg
 
@@ -223,9 +223,9 @@ class Db_Main_Server:
             curser.execute(del_push_room_sql)
             conn.commit()
             self.close_db(conn, curser)
-            msg = f'[+]: 群聊【{room_name}】移除推送服务成功！！！ 本群将不推送组队二维码咯 ~~'
+            msg = f' 群聊【{room_name}】移除推送服务成功！！！ 本群将不推送组队二维码咯 ~~'
         else:
-            msg = f'[~]: 群聊【{room_name}】已移除推送服务'
+            msg = f' 群聊【{room_name}】已移除推送服务'
         OutPut.outPut(msg)
         return msg
 
