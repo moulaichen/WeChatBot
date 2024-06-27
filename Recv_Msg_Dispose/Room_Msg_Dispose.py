@@ -1,3 +1,6 @@
+import threading
+import time
+
 from Api_Server.Api_Main_Server import Api_Main_Server
 from Db_Server.Db_Point_Server import Db_Point_Server
 from Db_Server.Db_Main_Server import Db_Main_Server
@@ -7,11 +10,24 @@ from OutPut import OutPut
 import yaml
 import os
 import re
+import requests
 
 
 def contains_emoji_tag(text=str):
     pattern = re.compile(r'<emoji.*?>.*?</emoji>', re.DOTALL)
     return bool(pattern.search(text))
+
+
+def check_img_tag(text):
+    pattern = re.compile(r'<img.*?>', re.DOTALL)
+    return bool(pattern.search(text))
+
+
+def string_contains_any_from_list(target, string_list):
+    for item in string_list:
+        if item in target:
+            return True
+    return False
 
 
 class Room_Msg_Dispose:
@@ -71,6 +87,17 @@ class Room_Msg_Dispose:
         self.Ip_Point = config['Point_Config']['Function_Point']['IP']
         self.Ai_Point = config['Point_Config']['Function_Point']['Ai_point']
         self.Port_Scan_Point = config['Point_Config']['Function_Point']['Port_Scan']
+
+        # 管理员模式
+        self.manager_mode_rooms = {}
+        # 游戏模式
+        self.game_mode_rooms = {}
+        self.game_point = {}
+        self.game_answer = {}
+        self.game_success = {}
+        self.idiom_pic = {}
+        # 创建一个线程锁
+        self.counter_lock = threading.Lock()
 
     # 主消息处理
     def Msg_Dispose(self, msg):
@@ -187,6 +214,11 @@ class Room_Msg_Dispose:
 
     # 娱乐功能
     def Happy_Function(self, msg):
+        if self.game_mode_rooms.get(msg.roomid, False):
+            self.gaming_function(msg)
+            return
+        if self.game_function(msg):
+            return
         # 美女图片
         if self.judge_keyword(keyword=self.Pic_Words, msg=msg.content, list_bool=True, equal_bool=True):
             save_path = self.Ams.get_girl_pic()
@@ -194,6 +226,36 @@ class Room_Msg_Dispose:
                 self.wcf.send_image(path=save_path, receiver=msg.roomid)
             else:
                 self.wcf.send_text(msg='美女图片接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+        # 虎扑热搜
+        elif self.judge_keyword(keyword=["虎扑热搜", "虎扑"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
+            hupu_msg = self.Ams.get_hupu()
+            if hupu_msg is None:
+                self.wcf.send_text(msg='未获取到虎扑热搜数据', receiver=msg.roomid)
+                return
+            self.wcf.send_text(msg=hupu_msg[0], receiver=msg.roomid, aters=msg.sender)
+            self.wcf.send_text(msg=hupu_msg[1], receiver=msg.roomid, aters=msg.sender)
+
+        # 点歌功能
+        elif self.judge_keyword(keyword=["点歌", "听歌"], msg=msg.content.strip(), list_bool=True, split_bool=True):
+            music_name = msg.content.strip().split(' ', 1)[1]
+            digest = '搜索歌曲：{}'.format(music_name)
+            url = 'https://tool.liumingye.cn/music/#/search/M/song/{}'.format(music_name)
+            self.send_music_message(digest, url, msg.roomid)
+        # 搜资源
+        elif self.judge_keyword(keyword=["搜", "搜资源"], msg=msg.content.strip(), list_bool=True, split_bool=True):
+            ziyuan_ming = msg.content.strip().split(' ', 1)[1]
+            ziyuan_msg = self.Ams.get_souziyuan(ziyuan_ming)
+            if ziyuan_msg is None:
+                self.wcf.send_text(msg='未获取到资源数据', receiver=msg.roomid)
+                return
+            self.wcf.send_text(msg=ziyuan_msg[0], receiver=msg.roomid, aters=msg.sender)
+            self.wcf.send_text(msg=ziyuan_msg[1], receiver=msg.roomid, aters=msg.sender)
+        # 60s
+        elif self.judge_keyword(keyword=["60", "60秒", "秒懂世界"], msg=msg.content.strip(), list_bool=True,
+                                equal_bool=True):
+            s60_msg = self.Ams.get_60s()
+            if s60_msg:
+                self.wcf.send_text(msg=s60_msg, receiver=msg.roomid, aters=msg.sender)
         # 龙图
         # if contains_emoji_tag(msg.content):
         #     save_path = self.Ams.get_longtu_pic()
@@ -208,79 +270,98 @@ class Room_Msg_Dispose:
                 self.wcf.send_file(path=save_path, receiver=msg.roomid)
             else:
                 self.wcf.send_text(msg='美女视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
-        # 天气查询
-        elif self.judge_keyword(keyword=self.Weather_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
-            weather_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.query_weather(
-                msg.content.strip())
-            self.wcf.send_text(msg=weather_msg, receiver=msg.roomid, aters=msg.sender)
-        # 舔狗日记
-        elif self.judge_keyword(keyword=self.Dog_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
-            dog_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_dog()
-            self.wcf.send_text(msg=dog_msg, receiver=msg.roomid, aters=msg.sender)
-        # 星座查询
-        elif self.judge_keyword(keyword=self.Constellation_Words, msg=msg.content.strip(), list_bool=True,
-                                split_bool=True):
-            constellation_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_constellation(
-                msg.content)
-            self.wcf.send_text(msg=constellation_msg, receiver=msg.roomid, aters=msg.sender)
-        # 早安寄语
-        elif self.judge_keyword(keyword=self.Morning_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
-            morning_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_morning()
-            self.wcf.send_text(msg=morning_msg, receiver=msg.roomid, aters=msg.sender)
-        # 摸鱼日记
-        elif self.judge_keyword(keyword=self.Fish_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
-            save_path = self.Ams.get_fish()
-            if 'Fish_Cache' in save_path:
-                self.wcf.send_image(path=save_path, receiver=msg.roomid)
+
+        # 吊带
+        elif self.judge_keyword(keyword=["吊带", "我要看吊带", "来点吊带"], msg=msg.content, list_bool=True,
+                                equal_bool=True):
+            save_path = self.Ams.get_diaodaigirl_video()
+            if 'Video_Cache' in save_path:
+                self.wcf.send_file(path=save_path, receiver=msg.roomid)
             else:
-                self.wcf.send_text(msg='摸鱼日记接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+                self.wcf.send_text(msg='美女视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+        # 帅哥
+        elif self.judge_keyword(keyword=["帅哥", "来点帅哥", "我要看帅哥"],
+                                msg=msg.content, list_bool=True,
+                                equal_bool=True):
+            save_path = self.Ams.get_fuji_video()
+            if 'Video_Cache' in save_path:
+                self.wcf.send_file(path=save_path, receiver=msg.roomid)
+            else:
+                self.wcf.send_text(msg='帅哥视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+
+        # # 天气查询
+        # elif self.judge_keyword(keyword=self.Weather_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
+        #     weather_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.query_weather(
+        #         msg.content.strip())
+        #     self.wcf.send_text(msg=weather_msg, receiver=msg.roomid, aters=msg.sender)
+        # # 舔狗日记
+        # elif self.judge_keyword(keyword=self.Dog_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
+        #     dog_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_dog()
+        #     self.wcf.send_text(msg=dog_msg, receiver=msg.roomid, aters=msg.sender)
+        # # 星座查询
+        # elif self.judge_keyword(keyword=self.Constellation_Words, msg=msg.content.strip(), list_bool=True,
+        #                         split_bool=True):
+        #     constellation_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_constellation(
+        #         msg.content)
+        #     self.wcf.send_text(msg=constellation_msg, receiver=msg.roomid, aters=msg.sender)
+        # # 早安寄语
+        # elif self.judge_keyword(keyword=self.Morning_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
+        #     morning_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_morning()
+        #     self.wcf.send_text(msg=morning_msg, receiver=msg.roomid, aters=msg.sender)
+        # # 摸鱼日记
+        # elif self.judge_keyword(keyword=self.Fish_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
+        #     save_path = self.Ams.get_fish()
+        #     if 'Fish_Cache' in save_path:
+        #         self.wcf.send_image(path=save_path, receiver=msg.roomid)
+        #     else:
+        #         self.wcf.send_text(msg='摸鱼日记接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
         # Whois查询
-        elif self.judge_keyword(keyword=self.Whois_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
-            whois_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_whois(
-                msg.content.strip())
-            self.wcf.send_text(msg=whois_msg, receiver=msg.roomid, aters=msg.sender)
-        # 归属地查询
-        elif self.judge_keyword(keyword=self.Attribution_Words, msg=msg.content.strip(), list_bool=True,
-                                split_bool=True):
-            attribution_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_attribution(
-                msg.content.strip())
-            self.wcf.send_text(msg=attribution_msg, receiver=msg.roomid, aters=msg.sender)
-        # 备案查询
-        elif self.judge_keyword(keyword=self.Icp_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
-            attribution_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_icp(
-                msg.content.strip())
-            self.wcf.send_text(msg=attribution_msg, receiver=msg.roomid, aters=msg.sender)
-        # 疯狂星期四文案
-        elif self.judge_keyword(keyword=self.Kfc_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
-            kfc_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_kfc().replace(
-                '\\n', '\n')
-            self.wcf.send_text(msg=kfc_msg, receiver=msg.roomid, aters=msg.sender)
-        # 周公解梦
-        elif self.judge_keyword(keyword=self.Dream_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
-            dream_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_dream(
-                msg.content.strip())
-            self.wcf.send_text(msg=dream_msg, receiver=msg.roomid, aters=msg.sender)
-        # help帮助菜单
-        elif self.judge_keyword(keyword=self.HelpMenu_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True,
-                                split_bool=True):
-            Thread(target=self.get_help, name="Help帮助菜单", args=(msg,)).start()
+        # elif self.judge_keyword(keyword=self.Whois_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
+        #     whois_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_whois(
+        #         msg.content.strip())
+        #     self.wcf.send_text(msg=whois_msg, receiver=msg.roomid, aters=msg.sender)
+        # # 归属地查询
+        # elif self.judge_keyword(keyword=self.Attribution_Words, msg=msg.content.strip(), list_bool=True,
+        #                         split_bool=True):
+        #     attribution_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_attribution(
+        #         msg.content.strip())
+        #     self.wcf.send_text(msg=attribution_msg, receiver=msg.roomid, aters=msg.sender)
+        # # 备案查询
+        # elif self.judge_keyword(keyword=self.Icp_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
+        #     attribution_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_icp(
+        #         msg.content.strip())
+        #     self.wcf.send_text(msg=attribution_msg, receiver=msg.roomid, aters=msg.sender)
+        # # 疯狂星期四文案
+        # elif self.judge_keyword(keyword=self.Kfc_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
+        #     kfc_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_kfc().replace(
+        #         '\\n', '\n')
+        #     self.wcf.send_text(msg=kfc_msg, receiver=msg.roomid, aters=msg.sender)
+        # # 周公解梦
+        # elif self.judge_keyword(keyword=self.Dream_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
+        #     dream_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_dream(
+        #         msg.content.strip())
+        #     self.wcf.send_text(msg=dream_msg, receiver=msg.roomid, aters=msg.sender)
+        # # help帮助菜单
+        # elif self.judge_keyword(keyword=self.HelpMenu_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True,
+        #                         split_bool=True):
+        #     Thread(target=self.get_help, name="Help帮助菜单", args=(msg,)).start()
         # 自定义回复
         Thread(target=self.custom_get, name="自定义回复", args=(msg,)).start()
 
     # 积分功能
     def Point_Function(self, msg, at_user_lists):
         # 签到功能
-        if msg.content.strip() == '签到':
-            sign_word = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + f'签到口令已改为：{self.Sign_Words}'
-            self.wcf.send_text(msg=sign_word, receiver=msg.roomid, aters=msg.sender)
-        elif msg.content.strip() == self.Sign_Words:
-            wx_name = self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)
-            room_name = self.Dms.query_room_name(room_id=msg.roomid)
-            sign_msg = f'@{wx_name}\n'
-            sign_msg += self.Dps.sign(wx_id=msg.sender, wx_name=wx_name, room_id=msg.roomid, room_name=room_name)
-            self.wcf.send_text(msg=sign_msg, receiver=msg.roomid, aters=msg.sender)
+        # if msg.content.strip() == '签到':
+        # sign_word = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + f'签到口令已改为：{self.Sign_Words}'
+        # self.wcf.send_text(msg=sign_word, receiver=msg.roomid, aters=msg.sender)
+        # elif msg.content.strip() == self.Sign_Words:
+        # wx_name = self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)
+        # room_name = self.Dms.query_room_name(room_id=msg.roomid)
+        # sign_msg = f'@{wx_name}\n'
+        # sign_msg += self.Dps.sign(wx_id=msg.sender, wx_name=wx_name, room_id=msg.roomid, room_name=room_name)
+        # self.wcf.send_text(msg=sign_msg, receiver=msg.roomid, aters=msg.sender)
         # 赠送积分功能
-        elif self.judge_keyword(keyword=self.Send_Point_Words, msg=self.handle_atMsg(msg, at_user_lists),
+        if self.judge_keyword(keyword=self.Send_Point_Words, msg=self.handle_atMsg(msg, at_user_lists),
                                 list_bool=True, split_bool=True):
             Thread(target=self.send_point, name="赠送积分",
                    args=(msg, self.handle_atMsg(msg, at_user_lists), at_user_lists,)).start()
@@ -371,7 +452,7 @@ class Room_Msg_Dispose:
         if msg.sender in admin_dicts.keys() or msg.sender in self.administrators:
             # admin_msg = f'@{wx_name}\n您是尊贵的管理员/超级管理员，本次对话不扣除积分'
             # self.wcf.send_text(msg=admin_msg, receiver=msg.roomid, aters=msg.sender)
-            use_msg = f'@{wx_name}\n' + self.Ams.get_ai(question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
+            use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
             self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=msg.sender)
         # 不是管理员
         else:
@@ -701,6 +782,101 @@ class Room_Msg_Dispose:
             for wx_id in at_user_lists:
                 content = content.replace('@' + self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=wx_id), '')
             return content.strip()
+
+    def send_music_message(self, digest, url, receiver):
+        self.wcf.send_rich_text(name='点歌',
+                                account='',
+                                title='MyFreeMP3',
+                                digest=digest,
+                                url=url,
+                                thumburl='https://tool.liumingye.cn/music/img/pwa-192x192.png',
+                                receiver=receiver)
+
+    def gaming_function(self, msg):
+        if self.judge_keyword(keyword=["退出游戏"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
+            self.game_mode_rooms[msg.roomid] = False
+            self.wcf.send_text(msg=f'游戏已中止！', receiver=msg.roomid)
+            return
+        elif self.judge_keyword(keyword=["重发"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
+            self.wcf.send_image(path=self.idiom_pic[msg.roomid], receiver=msg.roomid)
+            return
+        else:
+            try:
+                with self.counter_lock:
+                    if self.game_success.get(msg.roomid, False):
+                        return
+                    if self.judge_keyword(keyword=[self.game_answer[msg.roomid].get('答案', '')],
+                                          msg=msg.content.strip(), list_bool=True, equal_bool=True):
+                        self.game_success[msg.roomid] = True
+                        self.game_answer[msg.roomid] = None
+                        wx_name = self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)
+                        self.wcf.send_text(msg=f'恭喜{wx_name}答对了！', receiver=msg.roomid)
+                        if msg.roomid in self.game_point.keys():
+                            if wx_name in self.game_point[msg.roomid].keys():
+                                self.game_point[msg.roomid][wx_name] += 1
+                            else:
+                                self.game_point[msg.roomid][wx_name] = 1
+                        else:
+                            self.game_point[msg.roomid] = {wx_name: 1}
+            except Exception as e:
+                print(e)
+
+    def game_function(self, msg):
+        if self.judge_keyword(keyword=["看图猜成语"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
+            Thread(target=self.start_guess_idiom_image, name="看图猜成语", args=(msg,)).start()
+            return True
+
+    def start_guess_idiom_image(self, msg):
+        wx_name = self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)
+        self.wcf.send_text(msg=f'@{wx_name} '
+                               f'\n看图猜成语游戏开始，总共五轮！'
+                               f'\n如果要提前中止游戏，'
+                               f'\n请回复“退出游戏”。'
+                               f'\n如果未成功收到图片，'
+                               f'\n请回复“重发”。',
+                           receiver=msg.roomid, aters=msg.sender)
+        self.game_mode_rooms[msg.roomid] = True
+        for i in range(5):
+            if not self.game_mode_rooms.get(msg.roomid):
+                break
+            save_path, idiom_data = self.Ams.get_idiom()
+            self.idiom_pic[msg.roomid] = save_path
+            self.game_answer[msg.roomid] = idiom_data
+            self.wcf.send_image(path=save_path, receiver=msg.roomid)
+            self.wcf.send_text(msg=f'第{i + 1}轮题目：', receiver=msg.roomid)
+            self.wcf.send_text(msg='请在六十秒内回答，否则将跳过此题', receiver=msg.roomid)
+            cur_time = time.time()
+            while time.time() - cur_time < 63:
+                if not self.game_mode_rooms.get(msg.roomid, False):
+                    return
+                if self.game_success.get(msg.roomid, False):
+                    break
+                time.sleep(1)
+            if not self.game_mode_rooms.get(msg.roomid, False):
+                return
+            if self.game_success.get(msg.roomid, False):
+                self.game_success[msg.roomid] = False
+                self.wcf.send_text(msg='回答正确！', receiver=msg.roomid)
+            else:
+                self.wcf.send_text(msg='没有人回答正确！', receiver=msg.roomid)
+            answer = f"答案: {idiom_data['答案']}\n" \
+                     f"拼音: {idiom_data['拼音']}\n" \
+                     f"解释: {idiom_data['解释']}\n" \
+                     f"出处: {idiom_data['出处']}\n" \
+                     f"例句: {idiom_data['例句']}"
+            self.wcf.send_text(msg=answer, receiver=msg.roomid)
+            time.sleep(0.5)
+        msg_over = ["游戏结束！"]
+        for wx_name, point in self.game_point[msg.roomid].items():
+            msg_over.append(f"{wx_name}：{point} 分")
+        self.wcf.send_text(msg='\n'.join(msg_over), receiver=msg.roomid)
+
+        # 清空游戏数据
+        self.game_mode_rooms[msg.roomid] = False
+        self.game_point[msg.roomid] = {}
+        self.game_answer[msg.roomid] = None
+        self.idiom_pic[msg.roomid] = None
+        self.game_success[msg.roomid] = False
 
     # 关键词判断
     def judge_keyword(self, keyword, msg, list_bool=False, equal_bool=False, in_bool=False,

@@ -1,12 +1,12 @@
-from Api_Server.Api_Main_Server import Api_Main_Server
-from Cache.Cache_Main_Server import Cache_Main_Server
-from Db_Server.Db_Point_Server import Db_Point_Server
-from Db_Server.Db_Main_Server import Db_Main_Server
-from OutPut import OutPut
-import datetime
+import os
+
 import schedule
 import yaml
-import os
+from Api_Server.Api_Main_Server import Api_Main_Server
+from Cache.Cache_Main_Server import Cache_Main_Server
+from Db_Server.Db_Main_Server import Db_Main_Server
+from Db_Server.Db_Point_Server import Db_Point_Server
+from OutPut import OutPut
 
 
 class Push_Main_Server:
@@ -48,6 +48,16 @@ class Push_Main_Server:
         for room_id in room_dicts.keys():
             self.wcf.send_text(msg=morning_msg, receiver=room_id)
         OutPut.outPut('[+]: 定时早报推送成功！！！')
+
+        # 60s推送
+
+    def push_60s(self):
+        OutPut.outPut('[*]: 定时60s推送中... ...')
+        msg = self.Ams.get_60s()
+        room_dicts = self.Dms.show_push_rooms()
+        for room_id in room_dicts.keys():
+            self.wcf.send_text(msg=msg, receiver=room_id)
+        OutPut.outPut('[+]: 定时60s推送成功！！！')
 
     # 晚报推送
     def push_evening_page(self):
@@ -99,10 +109,11 @@ class Push_Main_Server:
 
     def run(self):
         schedule.every().day.at(self.Morning_Push_Time).do(self.push_morning_msg)
-        schedule.every().day.at(self.Morning_Page_Tome).do(self.push_morning_page)
+        # schedule.every().day.at(self.Morning_Page_Tome).do(self.push_morning_page)
+        schedule.every().day.at("09:00").do(self.push_60s)
         schedule.every().day.at(self.Fish_Time).do(self.push_fish)
         schedule.every().thursday.at(self.Kfc_Time).do(self.push_kfc)
-        schedule.every().day.at(self.Evening_Page_Time).do(self.push_evening_page)
+        # schedule.every().day.at(self.Evening_Page_Time).do(self.push_evening_page)
         schedule.every().day.at(self.Off_Work_Time).do(self.push_off_work)
         schedule.every().day.at('00:00').do(self.clear_sign)
         schedule.every().day.at('03:00').do(self.clear_cache)

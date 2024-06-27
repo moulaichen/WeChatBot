@@ -6,6 +6,8 @@ from OutPut import OutPut
 import yaml
 import os
 
+from Recv_Msg_Dispose.Room_Msg_Dispose import check_img_tag
+
 
 class Friend_Msg_Dispose:
     def __init__(self, wcf):
@@ -16,7 +18,17 @@ class Friend_Msg_Dispose:
         self.Room_Key_Word = config['Room_Key_Word']
         self.Administrators = config['Administrators']
         self.Ai_Lock = config['System_Config']['Ai_Lock']
+        self.forward_mes_adm = config['forward_mes_adm']
         self.Custom_Key_Words = config['Custom_KeyWord']
+        self.Zhuanfaquns = config['zhuanfaqun']
+
+        # 获取当前文件路径
+        current_path = os.path.dirname(__file__)
+
+        # 配置缓存文件夹路径
+        current_list_path = current_path.split('\\')
+        current_list_path.pop()
+        self.Cache_path = '/'.join(current_list_path) + '/Cache'
 
         # 实例化数据库服务类
         self.Dms = Db_Main_Server(wcf=self.wcf)
@@ -28,8 +40,12 @@ class Friend_Msg_Dispose:
         # 处理好友红包, 关键词进群, 好友Ai功能
         # 关键词进群
         rooms_id = self.Room_Key_Word.get(msg.content.strip())
+        mes_wx_id = self.forward_mes_adm
         if rooms_id:
             Thread(target=self.Join_Room, name="关键词进群", args=(rooms_id, msg,)).start()
+            # 转发群聊
+        elif msg.sender in mes_wx_id and check_img_tag(msg.content.strip()):
+            Thread(target=self.forward_qunmsg, name='转发图片给群聊', args=(msg,)).start()
         # 处理好友红包, 转发消息给主人
         elif msg.type == 10000 and '收到红包，请在手机上查看' in msg.content.strip():
             Thread(target=self.Forward_Msg, name="转发红包消息", args=(msg,)).start()
@@ -39,11 +55,11 @@ class Friend_Msg_Dispose:
         # 自动接收转账
         elif msg.type == 49 and '转账' in msg.content:
             Thread(target=self.Accept_Money, name="转账消息处理", args=(msg,)).start()
-        # Ai对话forward_msg
-        elif msg.type == 1:
-            Thread(target=self.get_ai, name="Ai对话", args=(msg,)).start()
-        # 消息转发给主人
-        Thread(target=self.forward_msg, name='转发消息给主人', args=(msg, )).start()
+        # # Ai对话forward_msg
+        # elif msg.type == 1:
+        #     Thread(target=self.get_ai, name="Ai对话", args=(msg,)).start()
+        # # 消息转发给主人
+        # Thread(target=self.forward_msg, name='转发消息给主人', args=(msg,)).start()
 
     def forward_msg(self, msg):
         if msg.type == 1:
@@ -120,3 +136,11 @@ class Friend_Msg_Dispose:
                 OutPut.outPut(f'[+]: 接收到好友红包, 已自动转发给主人！！！')
             else:
                 OutPut.outPut(f'[~]: 红包消息转发小问题, 问题不大 ~~~')
+
+    def forward_qunmsg(self, msg):
+        save_path = self.Cache_path + '/Pic_Cache/'
+        save_path = self.wcf.download_image(msg.id, msg.extra, save_path)
+        for administrator in self.Zhuanfaquns:
+            self.wcf.send_file(path=save_path, receiver=administrator)
+            # if status == 0:
+            #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)

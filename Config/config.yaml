@@ -3,6 +3,18 @@ Administrators:
   - 'wxid_6ozos2rfkizw22'
   - 'wxid_hzicw1nyk8dy22'
 
+## 超级管理员配置
+zhuanfaqun:
+  # 微信id
+  - '47353492569@chatroom'
+  - '57119476790@chatroom'
+  - '53489217969@chatroom'
+  - '39166989582@chatroom'
+  - '19774463823@chatroom'
+
+forward_mes_adm:
+  - 'love623954275'
+
 ## 系统配置
 System_Config:
   # 版权信息
@@ -163,9 +175,9 @@ Function_Key_Word:
   # 触发美女视频关键词
   Video_Word:
     - '视频'
-    - '美女视频'
-    - '成人视频'
-    - '18禁'
+    - '美女'
+    - '来点美女'
+    - '我要看美女'
   # 触发备案查询关键词
   Icp_Word:
     - '备案查询'
