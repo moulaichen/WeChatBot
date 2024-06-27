@@ -44206,3 +44206,17 @@ ash都是去cj过之后的人，发帖，留照片和联系方式，然后赚点
 [2024-06-27 19:15:49.183] [debug] [WCF] [rpc_server.cpp::471::PushMessage] Recv msg: [偷笑][偷笑][偷笑]
 [2024-06-27 19:15:51.187] [error] [WCF] [rpc_server.cpp::480::PushMessage] nng_send: Timed out
 [2024-06-27 19:15:51.187] [debug] [WCF] [rpc_server.cpp::482::PushMessage] Send data length 344
+[2024-06-27 23:25:12.621] [debug] [WCF] [log.cpp::33::InitLogger] InitLogger with debug level
+[2024-06-27 23:25:12.621] [debug] [WCF] [spy.cpp::30::InitSpy] WeChat version: 3.9.2.23
+[2024-06-27 23:25:12.624] [info] [WCF] [rpc_server.cpp::970::RunServer] CMD Server listening on tcp://0.0.0.0:29607
+[2024-06-27 23:25:12.627] [debug] [WCF] [rpc_server.cpp::822::dispatcher] 0x01[Functions_FUNC_IS_LOGIN] length: 2
+[2024-06-27 23:25:12.627] [debug] [WCF] [rpc_server.cpp::988::RunServer] Send data length 4
+[2024-06-27 23:25:13.639] [debug] [WCF] [rpc_server.cpp::822::dispatcher] 0x01[Functions_FUNC_IS_LOGIN] length: 2
+[2024-06-27 23:25:13.639] [debug] [WCF] [rpc_server.cpp::988::RunServer] Send data length 4
+[2024-06-27 23:25:14.641] [debug] [WCF] [rpc_server.cpp::822::dispatcher] 0x01[Functions_FUNC_IS_LOGIN] length: 2
+[2024-06-27 23:25:14.641] [debug] [WCF] [rpc_server.cpp::988::RunServer] Send data length 4
+[2024-06-28 00:07:51.696] [debug] [WCF] [log.cpp::33::InitLogger] InitLogger with debug level
+[2024-06-28 00:07:51.696] [debug] [WCF] [spy.cpp::30::InitSpy] WeChat version: 3.9.2.23
+[2024-06-28 00:07:51.698] [info] [WCF] [rpc_server.cpp::970::RunServer] CMD Server listening on tcp://0.0.0.0:24070
+[2024-06-28 00:07:51.701] [debug] [WCF] [rpc_server.cpp::822::dispatcher] 0x01[Functions_FUNC_IS_LOGIN] length: 2
+[2024-06-28 00:07:51.701] [debug] [WCF] [rpc_server.cpp::988::RunServer] Send data length 4

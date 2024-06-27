@@ -338,6 +338,40 @@ class Api_Main_Server:
         OutPut.outPut(f'[+]: 搜资源API接口调用成功！！！')
         return ziyuan_list
 
+    # def get_maren(self, content):
+    #     OutPut.outPut(f'[*]: 正在调用骂人接口... ...')
+    #     url = "https://www.hhlqilongzhu.cn/api/ziyuan_nanfeng.php?keysearch=" + content
+    #     try:
+    #         ziyuan_data = requests.get(url=url, headers=self.headers, timeout=30, verify=False).json()
+    #         # if ziyuan_data['success'] is False:
+    #         #     msg = f'[~]: 搜资源接口出现错误, 错误信息请查看日志 ~~~~~~'
+    #         #     return msg
+    #         if ziyuan_data['count'] == 0:
+    #             return None
+    #         hot_search = ziyuan_data['data']
+    #         if not hot_search:
+    #             return None
+    #
+    #         content_lst = []
+    #         queue1 = hot_search[:len(hot_search) // 2]
+    #         queue2 = hot_search[len(hot_search) // 2:]
+    #         # 分别处理两个队列
+    #         for i, queue_data in enumerate([queue1, queue2]):
+    #             start_index = i * (len(hot_search) // 2)
+    #             end_index = start_index + len(queue_data)
+    #             content = f'资源 {start_index + 1}-{end_index}\n'
+    #             for index, item in enumerate(queue_data):
+    #                 content += f'{start_index + index + 1}、{item["title"]}\n{item["data_url"]}\n'
+    #             content_lst.append(content)
+    #         OutPut.outPut(f'[+]: 搜资源API接口调用成功！！！')
+    #         return content_lst
+    #     except Exception as e:
+    #         msg = f'[-]: 搜资源API接口出现错误，错误信息：{e}\n正在回调中... ...'
+    #         OutPut.outPut(msg)
+    #         ziyuan_list = self.get_souziyuan(content)
+    #     OutPut.outPut(f'[+]: 搜资源API接口调用成功！！！')
+    #     return ziyuan_list
+
     # 龙图
     def get_longtu_pic(self):
         OutPut.outPut(f'[*]: 正在调用龙图图片接口... ...')
