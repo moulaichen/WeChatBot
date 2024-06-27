@@ -68856,3 +68856,7 @@ ash都是去cj过之后的人，发帖，留照片和联系方式，然后赚点
 [2024-06-28 00:10:40.043] [debug] [WCF] [rpc_server.cpp::482::PushMessage] Send data length 2413
 [2024-06-28 00:10:40.045] [debug] [WCF] [rpc_server.cpp::822::dispatcher] 0x50[Functions_FUNC_EXEC_DB_QUERY] length: 97
 [2024-06-28 00:10:40.045] [debug] [WCF] [rpc_server.cpp::988::RunServer] Send data length 63
+[2024-06-28 00:12:31.829] [debug] [WCF] [rpc_server.cpp::471::PushMessage] Recv msg: 我也是
+[2024-06-28 00:12:31.829] [debug] [WCF] [rpc_server.cpp::482::PushMessage] Send data length 334
+[2024-06-28 00:12:31.830] [debug] [WCF] [rpc_server.cpp::822::dispatcher] 0x50[Functions_FUNC_EXEC_DB_QUERY] length: 91
+[2024-06-28 00:12:31.831] [debug] [WCF] [rpc_server.cpp::988::RunServer] Send data length 55
