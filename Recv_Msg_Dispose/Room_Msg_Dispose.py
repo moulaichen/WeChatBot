@@ -250,6 +250,17 @@ class Room_Msg_Dispose:
                 return
             self.wcf.send_text(msg=ziyuan_msg[0], receiver=msg.roomid, aters=msg.sender)
             self.wcf.send_text(msg=ziyuan_msg[1], receiver=msg.roomid, aters=msg.sender)
+
+        # 骂他
+        # elif self.judge_keyword(keyword=["骂他"], msg=msg.content.strip(), list_bool=True, split_bool=True):
+        #     mata_sender = msg.content.strip().split(' ', 1)[1]
+        #     ziyuan_msg = self.Ams.get_souziyuan(ziyuan_ming)
+        #     if ziyuan_msg is None:
+        #         self.wcf.send_text(msg='未获取到资源数据', receiver=msg.roomid)
+        #         return
+        #     self.wcf.send_text(msg=ziyuan_msg[0], receiver=msg.roomid, aters=msg.sender)
+        #     self.wcf.send_text(msg=ziyuan_msg[1], receiver=msg.roomid, aters=msg.sender)
+
         # 60s
         elif self.judge_keyword(keyword=["60", "60秒", "秒懂世界"], msg=msg.content.strip(), list_bool=True,
                                 equal_bool=True):

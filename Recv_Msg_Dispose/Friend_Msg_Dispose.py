@@ -21,6 +21,7 @@ class Friend_Msg_Dispose:
         self.forward_mes_adm = config['forward_mes_adm']
         self.Custom_Key_Words = config['Custom_KeyWord']
         self.Zhuanfaquns = config['zhuanfaqun']
+        self.Dms = Db_Main_Server(wcf=self.wcf)
 
         # 获取当前文件路径
         current_path = os.path.dirname(__file__)
@@ -140,7 +141,8 @@ class Friend_Msg_Dispose:
     def forward_qunmsg(self, msg):
         save_path = self.Cache_path + '/Pic_Cache/'
         save_path = self.wcf.download_image(msg.id, msg.extra, save_path)
-        for administrator in self.Zhuanfaquns:
+        room_dicts = self.Dms.show_push_rooms()
+        for administrator in room_dicts:
             self.wcf.send_file(path=save_path, receiver=administrator)
             # if status == 0:
             #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
