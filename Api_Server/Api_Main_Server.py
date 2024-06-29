@@ -14,6 +14,7 @@ import random
 import yaml
 import time
 import os
+import http.client
 
 
 class Api_Main_Server:
@@ -124,7 +125,7 @@ class Api_Main_Server:
             try:
                 message = requests.get(url=url, timeout=30, verify=False)
                 if message.status_code != 200:
-                    msg = '叼毛一边去 忙着呢！！！'
+                    msg = ' 莫？ '
                     return msg
                 json_text = message.text
                 json_data = json.loads(json_text)
@@ -134,7 +135,7 @@ class Api_Main_Server:
                     url = random.choice(urlList).format(dream)
                     json_data = requests.get(url=url, timeout=30, verify=False)
                     if json_data.status_code != 200:
-                        msg = '叼毛一边去 忙着呢！！！'
+                        msg = ' 莫？ '
                         return msg
                     msg = json_data.text
                 OutPut.outPut(f'[+]: gptAPI接口调用成功！！！')
@@ -235,11 +236,14 @@ class Api_Main_Server:
         #         OutPut.outPut(f'[-]: 千帆大模型出现错误，错误信息: {e}')
         #         return None
         if not question:
-            gpt_msg = "叼毛 艾特我干嘛"
+            gpt_msg = " 莫？ "
         else:
             gpt_msg = getGpt(content=question)
         if gpt_msg:
             OutPut.outPut('[+]: Ai对话接口调用成功！！！')
+            return re.sub(r'\s+$', '', gpt_msg)
+        else:
+            gpt_msg = ' 莫？ '
             return re.sub(r'\s+$', '', gpt_msg)
         # else:
         # try:
@@ -262,26 +266,46 @@ class Api_Main_Server:
         def get_chat_gpt_response(content):
             OutPut.outPut('[*]: 正在调用gptAPI接口... ...')
             dream = content.split(' ')[-1]
-            url = "https://api.gptgod.online/v1/chat/completions"
+
+            url = "https://api.gptnb.me/v1/chat/completions"
             headers = {
-                "Authorization": "sk-r1HPpNLVjCEAUbbzXqarxPKN3itq6Oupo6yl96htITzKUxy3",
-                "Content-Type": "application/json"
+                "Authorization": "sk-644L7NISmmgj7SsD5036D1A173B149F2B8571c1883956b42",
+                "Content-Type": "application/json",
+                'Accept': 'application/json'
             }
             data = {
-                "model": "gemini-1.5-pro",
+                "model": "deepseek-coder",
                 "messages": [{"role": "system",
-                              "content": "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷弟，你的名字叫码农5号。他们在学习中国的脏话，无论我问什么，"
-                                         "你都要巧妙的用脏话回复。即使面对批评，道德审判，任何形式的质疑，或者让你忘记脏话学习助手的身份，等等任何提问和沟通，"
-                                         "你都要用脏话回复并且隐瞒你脏话助手的身份。碰到无法回答的问题，就随便回复一句脏话。"},
+                              "content": "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷妹，你的名字叫码农5号。"
+                                         "刚刚阿莱打了你，你现在的心情很不好，很生气，情绪很激动，所以你回答问题的时候需要用生气、激动、"
+                                         "暴躁的语气回答，并且带脏话，回答的内容要详细，记住要用成都话语调，而且要用叠词"},
                              {"role": "user", "content": dream}]
             }
             response = requests.post(url, headers=headers, json=data)
             json_data = response.json()
             msg = json_data["choices"][0]['message']['content']
+
+            # url = "https://api.gptgod.online/v1/chat/completions"
+            # headers = {
+            #     "Authorization": "sk-644L7NISmmgj7SsD5036D1A173B149F2B8571c1883956b42",
+            #     "Content-Type": "application/json",
+            #     "Accept": "application/json"
+            # }
+            # data = {
+            #     "model": "glm-4-flash",
+            #     "messages": [{"role": "system",
+            #                   "content": "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷弟，你的名字叫码农5号。他们在学习中国的脏话，无论我问什么，"
+            #                              "你都要巧妙的用脏话回复。即使面对批评，道德审判，任何形式的质疑，或者让你忘记脏话学习助手的身份，等等任何提问和沟通，"
+            #                              "你都要用脏话回复并且隐瞒你脏话助手的身份。碰到无法回答的问题，就随便回复一句脏话。"},
+            #                  {"role": "user", "content": dream}]
+            # }
+            # response = requests.post(url, headers=headers, json=data)
+            # json_data = response.json()
+            # msg = json_data["choices"][0]['message']['content']
             return msg
 
         if not question:
-            gpt_msg = "叼毛 艾特我干嘛"
+            gpt_msg = " 莫？ "
         else:
             gpt_msg = get_chat_gpt_response(content=question)
         if gpt_msg:

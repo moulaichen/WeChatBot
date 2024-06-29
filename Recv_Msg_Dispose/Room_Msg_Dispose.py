@@ -1,3 +1,4 @@
+import random
 import threading
 import time
 
@@ -10,7 +11,7 @@ from OutPut import OutPut
 import yaml
 import os
 import re
-import requests
+import random
 
 
 def contains_emoji_tag(text=str):
@@ -220,14 +221,14 @@ class Room_Msg_Dispose:
         if self.game_function(msg):
             return
         # 美女图片
-        if self.judge_keyword(keyword=self.Pic_Words, msg=msg.content, list_bool=True, equal_bool=True):
-            save_path = self.Ams.get_girl_pic()
-            if 'Pic_Cache' in save_path:
-                self.wcf.send_image(path=save_path, receiver=msg.roomid)
-            else:
-                self.wcf.send_text(msg='美女图片接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+        # if self.judge_keyword(keyword=self.Pic_Words, msg=msg.content, list_bool=True, equal_bool=True):
+        #     save_path = self.Ams.get_girl_pic()
+        #     if 'Pic_Cache' in save_path:
+        #         self.wcf.send_image(path=save_path, receiver=msg.roomid)
+        #     else:
+        #         self.wcf.send_text(msg='美女图片接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
         # 虎扑热搜
-        elif self.judge_keyword(keyword=["虎扑热搜", "虎扑"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
+        if self.judge_keyword(keyword=["虎扑热搜", "虎扑"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
             hupu_msg = self.Ams.get_hupu()
             if hupu_msg is None:
                 self.wcf.send_text(msg='未获取到虎扑热搜数据', receiver=msg.roomid)
@@ -274,31 +275,31 @@ class Room_Msg_Dispose:
         #         self.wcf.send_image(path=save_path, receiver=msg.roomid)
         #     else:
         #         self.wcf.send_text(msg='龙图图片接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
-        # 美女视频
-        elif self.judge_keyword(keyword=self.Video_Words, msg=msg.content, list_bool=True, equal_bool=True):
-            save_path = self.Ams.get_girl_video()
-            if 'Video_Cache' in save_path:
-                self.wcf.send_file(path=save_path, receiver=msg.roomid)
-            else:
-                self.wcf.send_text(msg='美女视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+        # # 美女视频
+        # elif self.judge_keyword(keyword=self.Video_Words, msg=msg.content, list_bool=True, equal_bool=True):
+        #     save_path = self.Ams.get_girl_video()
+        #     if 'Video_Cache' in save_path:
+        #         self.wcf.send_file(path=save_path, receiver=msg.roomid)
+        #     else:
+        #         self.wcf.send_text(msg='美女视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
 
         # 吊带
-        elif self.judge_keyword(keyword=["吊带", "我要看吊带", "来点吊带"], msg=msg.content, list_bool=True,
-                                equal_bool=True):
-            save_path = self.Ams.get_diaodaigirl_video()
-            if 'Video_Cache' in save_path:
-                self.wcf.send_file(path=save_path, receiver=msg.roomid)
-            else:
-                self.wcf.send_text(msg='美女视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+        # elif self.judge_keyword(keyword=["吊带", "我要看吊带", "来点吊带"], msg=msg.content, list_bool=True,
+        #                         equal_bool=True):
+        #     save_path = self.Ams.get_diaodaigirl_video()
+        #     if 'Video_Cache' in save_path:
+        #         self.wcf.send_file(path=save_path, receiver=msg.roomid)
+        #     else:
+        #         self.wcf.send_text(msg='美女视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
         # 帅哥
-        elif self.judge_keyword(keyword=["帅哥", "来点帅哥", "我要看帅哥"],
-                                msg=msg.content, list_bool=True,
-                                equal_bool=True):
-            save_path = self.Ams.get_fuji_video()
-            if 'Video_Cache' in save_path:
-                self.wcf.send_file(path=save_path, receiver=msg.roomid)
-            else:
-                self.wcf.send_text(msg='帅哥视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
+        # elif self.judge_keyword(keyword=["帅哥", "来点帅哥", "我要看帅哥"],
+        #                         msg=msg.content, list_bool=True,
+        #                         equal_bool=True):
+        #     save_path = self.Ams.get_fuji_video()
+        #     if 'Video_Cache' in save_path:
+        #         self.wcf.send_file(path=save_path, receiver=msg.roomid)
+        #     else:
+        #         self.wcf.send_text(msg='帅哥视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
 
         # # 天气查询
         # elif self.judge_keyword(keyword=self.Weather_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
@@ -373,7 +374,7 @@ class Room_Msg_Dispose:
         # self.wcf.send_text(msg=sign_msg, receiver=msg.roomid, aters=msg.sender)
         # 赠送积分功能
         if self.judge_keyword(keyword=self.Send_Point_Words, msg=self.handle_atMsg(msg, at_user_lists),
-                                list_bool=True, split_bool=True):
+                              list_bool=True, split_bool=True):
             Thread(target=self.send_point, name="赠送积分",
                    args=(msg, self.handle_atMsg(msg, at_user_lists), at_user_lists,)).start()
         # Md5查询
@@ -463,11 +464,18 @@ class Room_Msg_Dispose:
         if msg.sender in admin_dicts.keys() or msg.sender in self.administrators:
             # admin_msg = f'@{wx_name}\n您是尊贵的管理员/超级管理员，本次对话不扣除积分'
             # self.wcf.send_text(msg=admin_msg, receiver=msg.roomid, aters=msg.sender)
-            use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
+            use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(
+                question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
             self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=msg.sender)
         # 不是管理员
         else:
-            use_msg = f'@{wx_name}\n' + self.Ams.get_ai(question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
+            num = random.randint(1, 10)
+            if num % 2 == 0:
+                use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(
+                    question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
+            else:
+                use_msg = f'@{wx_name}\n' + self.Ams.get_ai(
+                    question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
             self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=msg.sender)
 
     # Md5查询

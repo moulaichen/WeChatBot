@@ -76,7 +76,8 @@ class Main_Server:
             try:
                 # 拿到每一条消息
                 msg = wcf.get_msg()
-                OutPut.outPut('[收到消息]: ' + str(msg))
+                if (msg.roomid == "" and msg.type == 3) or msg.type == 1:
+                    OutPut.outPut('[收到消息]: ' + str(msg))
                 # 拿到推送群聊
                 push_rooms = self.Dms.show_push_rooms()
                 # 查询好友 是否在数据库,如果不在自动添加到数据库中
