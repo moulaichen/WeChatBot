@@ -19,6 +19,7 @@ class Friend_Msg_Dispose:
         self.Administrators = config['Administrators']
         self.Ai_Lock = config['System_Config']['Ai_Lock']
         self.forward_mes_adm = config['forward_mes_adm']
+        self.zhuanfa_qun_ids = config['zhuanfaqun']
         self.Custom_Key_Words = config['Custom_KeyWord']
         self.Zhuanfaquns = config['zhuanfaqun']
         self.Dms = Db_Main_Server(wcf=self.wcf)
@@ -139,10 +140,23 @@ class Friend_Msg_Dispose:
                 OutPut.outPut(f'[~]: 红包消息转发小问题, 问题不大 ~~~')
 
     def forward_qunmsg(self, msg):
-        save_path = self.Cache_path + '/Pic_Cache/'
-        save_path = self.wcf.download_image(msg.id, msg.extra, save_path)
+        save_path = self.save_wei_image(msg)
+        # room_dicts = self.zhuanfa_qun_ids
         room_dicts = self.Dms.show_push_rooms()
         for administrator in room_dicts:
             self.wcf.send_file(path=save_path, receiver=administrator)
             # if status == 0:
             #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
+
+    def save_wei_image(self, msg):
+        save_path = self.Cache_path + '/Pic_Cache/'
+        max_num = 10
+        retries = 0
+        while retries < max_num:
+            save_path = self.wcf.download_image(msg.id, msg.extra, save_path)
+            if save_path != "":  # 如果返回非空字符串，跳出循环
+                break
+            retries += 1
+        if save_path == "":  # 如果达到最大重试次数仍然失败，可以处理错误
+            print("已达最大下载次数。。。。")
+        return save_path

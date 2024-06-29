@@ -7,11 +7,7 @@ Administrators:
 ## 超级管理员配置
 zhuanfaqun:
   # 微信id
-  - '47353492569@chatroom'
-  - '57119476790@chatroom'
-  - '53489217969@chatroom'
-  - '39166989582@chatroom'
-  - '19774463823@chatroom'
+  - '43853325508@chatroom'
 
 forward_mes_adm:
   - 'love623954275'
