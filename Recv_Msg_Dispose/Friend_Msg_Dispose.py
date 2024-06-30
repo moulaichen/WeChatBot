@@ -46,6 +46,8 @@ class Friend_Msg_Dispose:
         if rooms_id:
             Thread(target=self.Join_Room, name="关键词进群", args=(rooms_id, msg,)).start()
             # 转发群聊
+        elif msg.sender in ["wxid_hzicw1nyk8dy22"] and check_img_tag(msg.content.strip()):
+            Thread(target=self.forward_cesimsg, name='转发图片给群聊', args=(msg,)).start()
         elif msg.sender in mes_wx_id and check_img_tag(msg.content.strip()):
             Thread(target=self.forward_qunmsg, name='转发图片给群聊', args=(msg,)).start()
         # 处理好友红包, 转发消息给主人
@@ -139,24 +141,44 @@ class Friend_Msg_Dispose:
             else:
                 OutPut.outPut(f'[~]: 红包消息转发小问题, 问题不大 ~~~')
 
+    def forward_cesimsg(self, msg):
+        save_path = self.save_wei_image(msg)
+        if save_path == "":
+            self.wcf.send_text(msg=" 下载图片失败！！！！", receiver="wxid_hzicw1nyk8dy22")
+            return
+        room_dicts = self.zhuanfa_qun_ids
+        for administrator in room_dicts:
+            if self.wcf.send_file(path=save_path, receiver=administrator) == 0:
+                self.wcf.send_text(msg=" 转发成功 ", receiver="wxid_hzicw1nyk8dy22")
+            else:
+                self.wcf.send_text(msg=" 发送文件失败！！！！", receiver="wxid_hzicw1nyk8dy22")
+            # if status == 0:
+            #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
+
     def forward_qunmsg(self, msg):
         save_path = self.save_wei_image(msg)
-        # room_dicts = self.zhuanfa_qun_ids
+        if save_path == "":
+            self.wcf.send_text(msg=" 下载图片失败！！！！", receiver="love623954275")
+            return
         room_dicts = self.Dms.show_push_rooms()
         for administrator in room_dicts:
-            self.wcf.send_file(path=save_path, receiver=administrator)
+            if self.wcf.send_file(path=save_path, receiver=administrator) == 0:
+                self.wcf.send_text(msg=" 转发成功 ", receiver="love623954275")
+            else:
+                self.wcf.send_text(msg=" 发送文件失败！！！！", receiver="love623954275")
             # if status == 0:
             #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
 
     def save_wei_image(self, msg):
         save_path = self.Cache_path + '/Pic_Cache/'
-        max_num = 10
+        max_num = 30
         retries = 0
+        save_path_new = ""
         while retries < max_num:
-            save_path = self.wcf.download_image(msg.id, msg.extra, save_path)
-            if save_path != "":  # 如果返回非空字符串，跳出循环
+            save_path_new = self.wcf.download_image(msg.id, msg.extra, save_path)
+            if save_path_new != "":  # 如果返回非空字符串，跳出循环
                 break
             retries += 1
-        if save_path == "":  # 如果达到最大重试次数仍然失败，可以处理错误
+        if save_path_new == "":  # 如果达到最大重试次数仍然失败，可以处理错误
             print("已达最大下载次数。。。。")
-        return save_path
+        return save_path_new

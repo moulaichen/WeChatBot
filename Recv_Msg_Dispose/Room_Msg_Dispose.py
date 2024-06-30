@@ -102,6 +102,8 @@ class Room_Msg_Dispose:
 
     # 主消息处理
     def Msg_Dispose(self, msg):
+        if msg.sender == "wxid_5neoavqeubzm22":
+            return
         at_user_lists = []
         # 获取所在群所有管理员
         admin_dicts = self.Dms.show_admins(wx_id=msg.sender, room_id=msg.roomid)
