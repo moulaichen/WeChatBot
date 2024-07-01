@@ -496,6 +496,10 @@ class Room_Msg_Dispose:
                     use_msg = f'@{wx_name}\n' + self.Ams.get_ai(
                         question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
             self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=at_user_lists[1] if isAT else msg.sender)
+            qun_name = self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)
+            fa_song_name = self.wcf.get_alias_in_chatroom(wxid=msg.sender, roomid=msg.roomid)
+            msg_me = f'群聊：{qun_name}\n来自：{fa_song_name}\n消息：{msg.content}\n回复：{use_msg}'
+            self.wcf.send_text(msg=msg_me, receiver="48265783292@chatroom")
 
     # Md5查询
     def get_md5(self, msg):
