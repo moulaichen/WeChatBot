@@ -1,3 +1,6 @@
+import time
+from time import sleep
+
 from Api_Server.Api_Main_Server import Api_Main_Server
 from Db_Server.Db_Main_Server import Db_Main_Server
 import xml.etree.ElementTree as ET
@@ -143,35 +146,42 @@ class Friend_Msg_Dispose:
 
     def forward_cesimsg(self, msg):
         save_path = self.save_wei_image(msg)
+        isTure = True
         if save_path == "":
             self.wcf.send_text(msg=" 下载图片失败！！！！", receiver="wxid_hzicw1nyk8dy22")
             return
         room_dicts = self.zhuanfa_qun_ids
         for administrator in room_dicts:
-            if self.wcf.send_file(path=save_path, receiver=administrator) == 0:
-                self.wcf.send_text(msg=" 转发成功 ", receiver="wxid_hzicw1nyk8dy22")
-            else:
-                self.wcf.send_text(msg=" 发送文件失败！！！！", receiver="wxid_hzicw1nyk8dy22")
+            if self.wcf.send_file(path=save_path, receiver=administrator) != 0:
+                isTure = False
+        if isTure:
+            self.wcf.send_text(msg=" 转发成功 ", receiver="wxid_hzicw1nyk8dy22")
+        else:
+            self.wcf.send_text(msg=" 转发失败！！！ ", receiver="wxid_hzicw1nyk8dy22")
             # if status == 0:
             #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
 
     def forward_qunmsg(self, msg):
         save_path = self.save_wei_image(msg)
+        isTure = True
         if save_path == "":
             self.wcf.send_text(msg=" 下载图片失败！！！！", receiver="love623954275")
             return
         room_dicts = self.Dms.show_push_rooms()
         for administrator in room_dicts:
-            if self.wcf.send_file(path=save_path, receiver=administrator) == 0:
-                self.wcf.send_text(msg=" 转发成功 ", receiver="love623954275")
-            else:
-                self.wcf.send_text(msg=" 发送文件失败！！！！", receiver="love623954275")
-            # if status == 0:
-            #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
+            if self.wcf.send_file(path=save_path, receiver=administrator) != 0:
+                isTure = False
+        if isTure:
+            self.wcf.send_text(msg=" 转发成功 ", receiver="love623954275")
+        else:
+            self.wcf.send_text(msg=" 转发失败！！！ ", receiver="love623954275")
+        # if status == 0:
+        #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
 
     def save_wei_image(self, msg):
+        sleep(1)
         save_path = self.Cache_path + '/Pic_Cache/'
-        max_num = 30
+        max_num = 10
         retries = 0
         save_path_new = ""
         while retries < max_num:

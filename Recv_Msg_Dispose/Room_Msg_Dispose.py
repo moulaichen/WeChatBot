@@ -463,22 +463,39 @@ class Room_Msg_Dispose:
         admin_dicts = self.Dms.show_admins(wx_id=msg.sender, room_id=msg.roomid)
         room_name = self.Dms.query_room_name(room_id=msg.roomid)
         wx_name = self.wcf.get_alias_in_chatroom(wxid=msg.sender, roomid=msg.roomid)
+        isAT = len(at_user_lists) > 1
+        if isAT:
+            content = msg.content
+            second_at_index = content.find('@', content.find('@') + 1)
+            wx_name = content[second_at_index + 1:]
         if msg.sender in admin_dicts.keys() or msg.sender in self.administrators:
             # admin_msg = f'@{wx_name}\n您是尊贵的管理员/超级管理员，本次对话不扣除积分'
             # self.wcf.send_text(msg=admin_msg, receiver=msg.roomid, aters=msg.sender)
-            use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(
-                question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
-            self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=msg.sender)
+            if isAT:
+                use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(
+                    question=self.handle_atMsg_AT(msg, at_user_lists=at_user_lists))
+            else:
+                use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(
+                    question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
+            self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=at_user_lists[1] if isAT else msg.sender)
         # 不是管理员
         else:
             num = random.randint(1, 10)
             if num % 2 == 0:
-                use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(
-                    question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
+                if isAT:
+                    use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(
+                        question=self.handle_atMsg_AT(msg, at_user_lists=at_user_lists))
+                else:
+                    use_msg = f'@{wx_name}\n' + self.Ams.get_baozhao_ai(
+                        question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
             else:
-                use_msg = f'@{wx_name}\n' + self.Ams.get_ai(
-                    question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
-            self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=msg.sender)
+                if isAT:
+                    use_msg = f'@{wx_name}\n' + self.Ams.get_ai(
+                        question=self.handle_atMsg_AT(msg, at_user_lists=at_user_lists))
+                else:
+                    use_msg = f'@{wx_name}\n' + self.Ams.get_ai(
+                        question=self.handle_atMsg(msg, at_user_lists=at_user_lists))
+            self.wcf.send_text(msg=use_msg, receiver=msg.roomid, aters=at_user_lists[1] if isAT else msg.sender)
 
     # Md5查询
     def get_md5(self, msg):
@@ -802,6 +819,13 @@ class Room_Msg_Dispose:
             content = msg.content
             for wx_id in at_user_lists:
                 content = content.replace('@' + self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=wx_id), '')
+            return content.strip()
+
+    def handle_atMsg_AT(self, msg, at_user_lists):
+        if at_user_lists:
+            content = msg.content
+            wx_id = at_user_lists[0]
+            content = content.replace('@' + self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=wx_id), '')
             return content.strip()
 
     def send_music_message(self, digest, url, receiver):
