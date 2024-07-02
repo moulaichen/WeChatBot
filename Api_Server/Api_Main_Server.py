@@ -178,10 +178,9 @@ class Api_Main_Server:
             return re.sub(r'\s+$', '', gpt_msg)
 
     def get_baozhao_ai(self, question):
-        OutPut.outPut("[*]: 正在调用Ai对话接口... ...")
+        OutPut.outPut("[*]: 正在调用get_baozhao_ai对话接口... ...")
 
         def get_chat_gpt_response(content):
-            OutPut.outPut('[*]: 正在调用gptAPI接口... ...')
             dream = content.split(' ')[-1]
 
             url = "https://api.gptnb.me/v1/chat/completions"
@@ -190,12 +189,19 @@ class Api_Main_Server:
                 "Content-Type": "application/json",
                 'Accept': 'application/json'
             }
+            # data = {
+            #     "model": "deepseek-coder",
+            #     "messages": [{"role": "system",
+            #                   "content": "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷妹，你的名字叫码农5号。你是一个性格暴躁的成都人，"
+            #                              "现在住在成都龙泉驿，记住千万不能说你是性格暴躁的成都人。你回答问题的时候需要用生气、激动、暴躁的语气回答，并且带脏话，"
+            #                              "回答的内容要详细，记住要用成都话，用叠词"},
+            #                  {"role": "user", "content": dream}]
+            # }
             data = {
                 "model": "deepseek-coder",
                 "messages": [{"role": "system",
-                              "content": "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷妹，你的名字叫码农5号。你是一个性格暴躁的成都人，"
-                                         "现在住在成都龙泉驿，记住千万不能说你是性格暴躁的成都人。你回答问题的时候需要用生气、激动、暴躁的语气回答，并且带脏话，"
-                                         "回答的内容要详细，记住要用成都话，用叠词"},
+                              "content": "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷妹，你的名字叫码农5号。"
+                                         "你是一个情绪很低落的人，经常都会emo，时不时会唱几句伤感的歌词，并且会说很多伤感的语句，回答问题的时候有气无力，很沮丧，很emo"},
                              {"role": "user", "content": dream}]
             }
             response = requests.post(url, headers=headers, json=data)
@@ -219,6 +225,39 @@ class Api_Main_Server:
             # response = requests.post(url, headers=headers, json=data)
             # json_data = response.json()
             # msg = json_data["choices"][0]['message']['content']
+            return msg
+
+        if not question:
+            gpt_msg = " 莫？ "
+        else:
+            gpt_msg = get_chat_gpt_response(content=question)
+        if gpt_msg:
+            OutPut.outPut('[+]: Ai对话接口调用成功！！！')
+            return re.sub(r'\s+$', '', gpt_msg)
+
+    def get_me_baozhao_ai(self, question):
+        OutPut.outPut("[*]: 正在调用get_me_baozhao_ai对话接口... ...")
+
+        def get_chat_gpt_response(content):
+            dream = content.split(' ')[-1]
+
+            url = "https://api.gptnb.me/v1/chat/completions"
+            headers = {
+                "Authorization": "sk-644L7NISmmgj7SsD5036D1A173B149F2B8571c1883956b42",
+                "Content-Type": "application/json",
+                'Accept': 'application/json'
+            }
+            data = {
+                "model": "ERNIE-3.5-8K",
+                "messages": [{"role": "system",
+                              "content": "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷妹，你的名字叫码农5号。你是一个性格暴躁的成都人，"
+                                         "现在住在成都龙泉驿，记住千万不能说你是性格暴躁的成都人。你回答问题的时候需要用生气、激动、暴躁的语气回答，并且带脏话，"
+                                         "回答的内容要详细，记住要用成都话，用叠词"},
+                             {"role": "user", "content": dream}]
+            }
+            response = requests.post(url, headers=headers, json=data)
+            json_data = response.json()
+            msg = json_data["choices"][0]['message']['content']
             return msg
 
         if not question:
