@@ -166,75 +166,6 @@ class Api_Main_Server:
             msg = json_data["choices"][0]['message']['content']
             return msg
 
-        # def getElse():
-        #     OutPut.outPut('[*]: 正在调用gptAPI接口... ...')
-        #     url = self.GPT3_Api.format(dream)
-        #     msg = ''
-        #     try:
-        #         json_data = requests.get(url=url, timeout=30, verify=False)
-        #         if json_data.status_code != 200:
-        #             msg = '叼毛一边去 忙着呢！！！'
-        #             return msg
-        #         msg = json_data.text
-        #
-        #         OutPut.outPut(f'[+]: gptAPI接口调用成功！！！')
-        #         return msg
-        #     except Exception as e:
-        #         msg = f'[-]: gpt接口出现错误, 错误信息：{e}'
-        #         OutPut.outPut(msg)
-
-        # def getGpt(content):
-        #     self.messages.append({"role": "user", "content": f'{content}'})
-        #     data = {
-        #         "model": "gpt-3.5-turbo",
-        #         "messages": self.messages
-        #     }
-        #     headers = {
-        #         "Content-Type": "application/json",
-        #         "Authorization": f"{self.OpenAi_Key}",
-        #     }
-        #     try:
-        #         resp = requests.post(url=self.OpenAi_Api, headers=headers, json=data, timeout=15)
-        #         json_data = resp.json()
-        #         assistant_content = json_data['choices'][0]['message']['content']
-        #         self.messages.append({"role": "assistant", "content": f"{assistant_content}"})
-        #         if len(self.messages) == 15:
-        #             self.messages = [{"role": "system", "content": f"{self.OpenAi_Initiating_Message}"}]
-        #         return assistant_content
-        #     except Exception as e:
-        #         OutPut.outPut(f'[-]: AI对话接口出现错误，错误信息： {e}')
-        #         self.messages = [{"role": "system", "content": f"{self.OpenAi_Initiating_Message}"}]
-        #         return None
-        #
-        # # 星火大模型
-        # def get_xh(question):
-        #     try:
-        #         OutPut.outPut(f'[+]: 正在调用星火大模型... ...')
-        #         question = checkLen(getText("user", question))
-        #         SparkApi.answer = ""
-        #         SparkApi.main(self.Spark_Appid, self.Spark_ApiKey, self.Spark_ApiSecret, self.Spark_url,
-        #                       self.Spark_Domain,
-        #                       question)
-        #         getText("assistant", SparkApi.answer)
-        #         Xh_Msg = SparkApi.get_content()
-        #         return Xh_Msg
-        #     except Exception as e:
-        #         OutPut.outPut(f'[-]: 星火大模型出现错误，错误信息: {e}')
-        #         return None
-        #
-        # # 千帆大模型
-        # def get_qf(quest):
-        #     try:
-        #         OutPut.outPut(f'[*]: 正在调用千帆大模型... ...')
-        #         self.chat_mess.append(quest)
-        #         resp = self.chat_comp.do(messages=self.chat_mess)
-        #         self.chat_mess.append(resp)
-        #         accept_msg = resp['body']['result']
-        #         OutPut.outPut('[+]: Ai对话接口调用成功！！！')
-        #         return accept_msg
-        #     except Exception as e:
-        #         OutPut.outPut(f'[-]: 千帆大模型出现错误，错误信息: {e}')
-        #         return None
         if not question:
             gpt_msg = " 莫？ "
         else:
@@ -245,20 +176,6 @@ class Api_Main_Server:
         else:
             gpt_msg = ' 莫？ '
             return re.sub(r'\s+$', '', gpt_msg)
-        # else:
-        # try:
-        #     Xh_Msg = get_xh(question=question)
-        # except Exception as e:
-        #     OutPut.outPut(f'[-]: 星火大模型出现错误，错误信息: {e}')
-        #     return None
-        # if not Xh_Msg:
-        #     if not self.qf_ak:
-        #         OutPut.outPut(f'[-]: 千帆模型接口未配置，其它模型出现错误，请查看日志！')
-        #         return '千帆模型接口未配置，其它模型出现错误，请查看日志！'
-        #     return get_qf(quest=question)
-        # else:
-        #     OutPut.outPut('[+]: Ai对话接口调用成功！！！')
-        #     return Xh_Msg
 
     def get_baozhao_ai(self, question):
         OutPut.outPut("[*]: 正在调用Ai对话接口... ...")
@@ -330,71 +247,59 @@ class Api_Main_Server:
 
     def get_souziyuan(self, content):
         OutPut.outPut(f'[*]: 正在调用搜资源接口... ...')
-        url = "https://www.hhlqilongzhu.cn/api/ziyuan_nanfeng.php?keysearch=" + content
+        url = "http://www.662688.xyz/api/get_zy?keyword=" + content
         try:
             ziyuan_data = requests.get(url=url, headers=self.headers, timeout=30, verify=False).json()
             # if ziyuan_data['success'] is False:
             #     msg = f'[~]: 搜资源接口出现错误, 错误信息请查看日志 ~~~~~~'
             #     return msg
-            if ziyuan_data['count'] == 0:
-                return None
             hot_search = ziyuan_data['data']
             if not hot_search:
                 return None
-
-            content_lst = []
-            queue1 = hot_search[:len(hot_search) // 2]
-            queue2 = hot_search[len(hot_search) // 2:]
+            if len(hot_search) > 10:
+                hot_search = hot_search[:5]
             # 分别处理两个队列
-            for i, queue_data in enumerate([queue1, queue2]):
-                start_index = i * (len(hot_search) // 2)
-                end_index = start_index + len(queue_data)
-                content = f'资源 {start_index + 1}-{end_index}\n'
-                for index, item in enumerate(queue_data):
-                    content += f'{start_index + index + 1}、{item["title"]}\n{item["data_url"]}\n'
-                content_lst.append(content)
+            content = ""
+            for index, item in enumerate(hot_search, start=1):
+                content += f"{index}. {item['title']} {item['url']}\n"
             OutPut.outPut(f'[+]: 搜资源API接口调用成功！！！')
-            return content_lst
+            return content
         except Exception as e:
             msg = f'[-]: 搜资源API接口出现错误，错误信息：{e}\n正在回调中... ...'
             OutPut.outPut(msg)
-            ziyuan_list = self.get_souziyuan(content)
+            content = self.get_souziyuan(content)
         OutPut.outPut(f'[+]: 搜资源API接口调用成功！！！')
-        return ziyuan_list
+        return content
 
-    # def get_maren(self, content):
-    #     OutPut.outPut(f'[*]: 正在调用骂人接口... ...')
-    #     url = "https://www.hhlqilongzhu.cn/api/ziyuan_nanfeng.php?keysearch=" + content
-    #     try:
-    #         ziyuan_data = requests.get(url=url, headers=self.headers, timeout=30, verify=False).json()
-    #         # if ziyuan_data['success'] is False:
-    #         #     msg = f'[~]: 搜资源接口出现错误, 错误信息请查看日志 ~~~~~~'
-    #         #     return msg
-    #         if ziyuan_data['count'] == 0:
-    #             return None
-    #         hot_search = ziyuan_data['data']
-    #         if not hot_search:
-    #             return None
-    #
-    #         content_lst = []
-    #         queue1 = hot_search[:len(hot_search) // 2]
-    #         queue2 = hot_search[len(hot_search) // 2:]
-    #         # 分别处理两个队列
-    #         for i, queue_data in enumerate([queue1, queue2]):
-    #             start_index = i * (len(hot_search) // 2)
-    #             end_index = start_index + len(queue_data)
-    #             content = f'资源 {start_index + 1}-{end_index}\n'
-    #             for index, item in enumerate(queue_data):
-    #                 content += f'{start_index + index + 1}、{item["title"]}\n{item["data_url"]}\n'
-    #             content_lst.append(content)
-    #         OutPut.outPut(f'[+]: 搜资源API接口调用成功！！！')
-    #         return content_lst
-    #     except Exception as e:
-    #         msg = f'[-]: 搜资源API接口出现错误，错误信息：{e}\n正在回调中... ...'
-    #         OutPut.outPut(msg)
-    #         ziyuan_list = self.get_souziyuan(content)
-    #     OutPut.outPut(f'[+]: 搜资源API接口调用成功！！！')
-    #     return ziyuan_list
+    def get_ai_hua(self, content):
+        OutPut.outPut(f'[*]: 正在ai画图接口... ...')
+        save_path = self.Cache_path + '/Pic_Cache/' + str(int(time.time() * 1000)) + '.jpg'
+        try:
+            imageUrl = self.ai_image_url(content)
+            # pic_data = requests.get(url=imageUrl, headers=self.headers, timeout=30, verify=False).content
+            # with open(file=save_path, mode='wb') as pd:
+            #     pd.write(pic_data)
+        except Exception as e:
+            msg = f'[-]: ai画图出现错误，错误信息：{e}\n正在回调中... ...'
+            OutPut.outPut(msg)
+            imageUrl = self.get_ai_hua(content)
+        OutPut.outPut(f'[+]: ai画图接口调用成功！！！')
+        return imageUrl
+
+    def ai_image_url(self, content):
+        url = f'https://api.pearktrue.cn/api/stablediffusion/?prompt={content}&model=vertical'
+        try:
+            pic_data = requests.get(url=url, headers=self.headers, timeout=200, verify=False).json()
+            code = pic_data["code"]
+            if code != 200:
+                return None
+            imageUrl = pic_data["imgurl"]
+        except Exception as e:
+            msg = f'[-]: ai画图出现错误，错误信息：{e}\n正在回调中... ...'
+            OutPut.outPut(msg)
+            imageUrl = self.ai_image_url(content)
+        OutPut.outPut(f'[+]: ai画图接口调用成功！！！')
+        return imageUrl
 
     # 龙图
     def get_longtu_pic(self):

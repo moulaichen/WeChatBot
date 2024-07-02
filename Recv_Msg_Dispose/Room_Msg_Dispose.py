@@ -247,13 +247,20 @@ class Room_Msg_Dispose:
         # 搜资源
         elif self.judge_keyword(keyword=["搜", "搜资源"], msg=msg.content.strip(), list_bool=True, split_bool=True):
             ziyuan_ming = msg.content.strip().split(' ', 1)[1]
-            ziyuan_msg = self.Ams.get_souziyuan(ziyuan_ming)
-            if ziyuan_msg is None:
+            content = self.Ams.get_souziyuan(ziyuan_ming)
+            if content is None:
                 self.wcf.send_text(msg='未获取到资源数据', receiver=msg.roomid)
                 return
-            self.wcf.send_text(msg=ziyuan_msg[0], receiver=msg.roomid, aters=msg.sender)
-            self.wcf.send_text(msg=ziyuan_msg[1], receiver=msg.roomid, aters=msg.sender)
-
+            self.wcf.send_text(msg=content, receiver=msg.roomid, aters=msg.sender)
+        # 画
+        elif self.judge_keyword(keyword=["画"], msg=msg.content.strip(), list_bool=True, split_bool=True):
+            hua = msg.content.strip().split(' ', 1)[1]
+            self.wcf.send_text(msg="图片正在生成中.....", receiver=msg.roomid, aters=msg.sender)
+            ai_hua_path = self.Ams.get_ai_hua(hua)
+            if ai_hua_path is None:
+                self.wcf.send_text(msg='图片生成失败....', receiver=msg.roomid)
+                return
+            self.wcf.send_image(path=ai_hua_path, receiver=msg.roomid)
         # 骂他
         # elif self.judge_keyword(keyword=["骂他"], msg=msg.content.strip(), list_bool=True, split_bool=True):
         #     mata_sender = msg.content.strip().split(' ', 1)[1]
