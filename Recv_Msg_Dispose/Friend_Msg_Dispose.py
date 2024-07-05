@@ -53,6 +53,10 @@ class Friend_Msg_Dispose:
             Thread(target=self.forward_cesimsg, name='转发图片给群聊', args=(msg,)).start()
         elif msg.sender in mes_wx_id and check_img_tag(msg.content.strip()):
             Thread(target=self.forward_qunmsg, name='转发图片给群聊', args=(msg,)).start()
+        # elif msg.sender in ["wxid_hzicw1nyk8dy22"] and msg.type == 49:
+        #     Thread(target=self.forward_ltjl, name='转发聊天记录给群聊', args=(msg,)).start()
+        # elif msg.sender in mes_wx_id and msg.type == 49:
+        #     Thread(target=self.forward_ltjl, name='转发聊天记录给群聊', args=(msg,)).start()
         # 处理好友红包, 转发消息给主人
         elif msg.type == 10000 and '收到红包，请在手机上查看' in msg.content.strip():
             Thread(target=self.Forward_Msg, name="转发红包消息", args=(msg,)).start()
@@ -160,6 +164,17 @@ class Friend_Msg_Dispose:
             self.wcf.send_text(msg=" 转发失败！！！ ", receiver="wxid_hzicw1nyk8dy22")
             # if status == 0:
             #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
+
+    def forward_ltjl(self, msg):
+        for i in range(10):
+            if i == 1:
+                sleep(3)
+                self.wcf.forward_msg(id=msg.id, receiver="48265783292@chatroom")
+                OutPut.outPut("推送")
+            elif i == 9:
+                sleep(5)
+                self.wcf.forward_msg(id=msg.id, receiver="43853325508@chatroom")
+                OutPut.outPut("测试")
 
     def forward_qunmsg(self, msg):
         save_path = self.save_wei_image(msg)

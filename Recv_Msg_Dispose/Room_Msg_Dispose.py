@@ -237,28 +237,44 @@ class Room_Msg_Dispose:
                 return
             self.wcf.send_text(msg=hupu_msg[0], receiver=msg.roomid, aters=msg.sender)
             self.wcf.send_text(msg=hupu_msg[1], receiver=msg.roomid, aters=msg.sender)
-
+        #
+        if self.judge_keyword(keyword=["美女", "妹子", "小姐姐", "小迷妹"], msg=msg.content.strip(), list_bool=True,
+                              equal_bool=True):
+            content = msg.content.strip()
+            msgList = ["谁在叫我", "喊我干嘛", f'{content}来啦', f'我是{content} 什么事',
+                       f'喊{content}我干嘛']
+            msgStr = random.choice(msgList)
+            self.wcf.send_text(msg=msgStr, receiver=msg.roomid)
+            room_name = self.Dms.query_room_name(room_id=msg.roomid)
+            forMe = f'群聊：{room_name}\n{msgStr}'
+            self.wcf.send_text(msg=forMe, receiver="48265783292@chatroom")
         # 点歌功能
         elif self.judge_keyword(keyword=["点歌", "听歌"], msg=msg.content.strip(), list_bool=True, split_bool=True):
             music_name = msg.content.strip().split(' ', 1)[1]
             digest = '搜索歌曲：{}'.format(music_name)
             url = 'https://tool.liumingye.cn/music/#/search/M/song/{}'.format(music_name)
             self.send_music_message(digest, url, msg.roomid)
-        # 搜资源
-        elif self.judge_keyword(keyword=["搜", "搜资源"], msg=msg.content.strip(), list_bool=True, split_bool=True):
-            ziyuan_ming = msg.content.strip().split(' ', 1)[1]
-            content = self.Ams.get_souziyuan(ziyuan_ming)
-            if content is None:
-                self.wcf.send_text(msg='未获取到资源数据', receiver=msg.roomid)
-                return
-            self.wcf.send_text(msg=content, receiver=msg.roomid, aters=msg.sender)
-        # 画
-        elif self.judge_keyword(keyword=["画"], msg=msg.content.strip(), list_bool=True, split_bool=True):
-            hua = msg.content.strip().split(' ', 1)[1]
-            self.wcf.send_text(msg="图片正在生成中.....", receiver=msg.roomid, aters=msg.sender)
-            ai_hua_path = self.Ams.get_ai_hua(hua)
+        # # 搜资源
+        # elif self.judge_keyword(keyword=["搜", "搜资源"], msg=msg.content.strip(), list_bool=True, split_bool=True):
+        #     ziyuan_ming = msg.content.strip().split(' ', 1)[1]
+        #     content = self.Ams.get_souziyuan(ziyuan_ming)
+        #     if content is None:
+        #         self.wcf.send_text(msg='未获取到资源数据', receiver=msg.roomid)
+        #         return
+        #     self.wcf.send_text(msg=content, receiver=msg.roomid, aters=msg.sender)
+        # # 画
+        # elif self.judge_keyword(keyword=["画"], msg=msg.content.strip(), list_bool=True, split_bool=True):
+        #     hua = msg.content.strip().split(' ', 1)[1]
+        #     self.wcf.send_text(msg="图片正在生成中.....", receiver=msg.roomid, aters=msg.sender)
+        #     ai_hua_path = self.Ams.get_ai_hua(hua)
+        #     if ai_hua_path is None:
+        #         self.wcf.send_text(msg='图片生成失败....', receiver=msg.roomid)
+        #         return
+        #     self.wcf.send_image(path=ai_hua_path, receiver=msg.roomid)
+        # 爆照
+        elif self.judge_keyword(keyword=["爆照"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
+            ai_hua_path = self.Ams.get_meizi_baozhao()
             if ai_hua_path is None:
-                self.wcf.send_text(msg='图片生成失败....', receiver=msg.roomid)
                 return
             self.wcf.send_image(path=ai_hua_path, receiver=msg.roomid)
         # 骂他
@@ -300,7 +316,7 @@ class Room_Msg_Dispose:
         #         self.wcf.send_file(path=save_path, receiver=msg.roomid)
         #     else:
         #         self.wcf.send_text(msg='美女视频接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
-        # 帅哥
+        # # 帅哥
         # elif self.judge_keyword(keyword=["帅哥", "来点帅哥", "我要看帅哥"],
         #                         msg=msg.content, list_bool=True,
         #                         equal_bool=True):

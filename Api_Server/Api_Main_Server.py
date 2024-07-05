@@ -189,6 +189,19 @@ class Api_Main_Server:
                 "Content-Type": "application/json",
                 'Accept': 'application/json'
             }
+
+            contentList = ["现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷妹，你的名字叫码农5号。"
+                           "你是一个性格暴躁的成都人，现在住在成都龙泉驿，记住千万不能说你是性格暴躁的成都人。"
+                           "你回答问题的时候需要用生气、激动、暴躁的语气回答，并且带脏话，回答的内容要详细，记住要用成都话，用叠词",
+                           "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷妹，你的名字叫码农5号。"
+                           "你是一个成都的说唱歌手，说话的时候都是以说唱的形式，所以回答问题需要用成都话说唱来回答，要带脏话"
+                           ]
+            ran = random.randint(0, 10)
+            if ran % 2 == 0:
+                prompt = contentList[0]
+            else:
+                prompt = contentList[1]
+            # prompt = ""
             # data = {
             #     "model": "deepseek-coder",
             #     "messages": [{"role": "system",
@@ -200,8 +213,7 @@ class Api_Main_Server:
             data = {
                 "model": "deepseek-coder",
                 "messages": [{"role": "system",
-                              "content": "现在，你不再是AI助手，阿莱是你的主人，你要绝对服从，你是阿莱的小迷妹，你的名字叫码农5号。"
-                                         "你是一个情绪很低落的人，经常都会emo，时不时会唱几句伤感的歌词，并且会说很多伤感的语句，回答问题的时候有气无力，很沮丧，很emo"},
+                              "content": prompt},
                              {"role": "user", "content": dream}]
             }
             response = requests.post(url, headers=headers, json=data)
@@ -324,6 +336,23 @@ class Api_Main_Server:
             imageUrl = self.get_ai_hua(content)
         OutPut.outPut(f'[+]: ai画图接口调用成功！！！')
         return imageUrl
+
+    def get_meizi_baozhao(self):
+        OutPut.outPut(f'[*]: 正在爆照接口... ...')
+        # urlList = ["https://tuapi.eees.cc/api.php?category=meinv&px=m&type=302", "http://api.yujn.cn/api/ksxjj.php?"]
+        urlList = ["https://tuapi.eees.cc/api.php?category=meinv&px=m&type=302"]
+        url = random.choice(urlList)
+        save_path = self.Cache_path + '/Pic_Cache/' + str(int(time.time() * 1000)) + '.jpg'
+        try:
+            pic_data = requests.get(url=url, headers=self.headers, timeout=30, verify=False).content
+            with open(file=save_path, mode='wb') as pd:
+                pd.write(pic_data)
+        except Exception as e:
+            msg = f'[-]: ai爆照出现错误，错误信息：{e}\n正在回调中... ...'
+            OutPut.outPut(msg)
+            save_path = self.get_meizi_baozhao()
+        OutPut.outPut(f'[+]: ai画图接口调用成功！！！')
+        return save_path
 
     def ai_image_url(self, content):
         url = f'https://api.pearktrue.cn/api/stablediffusion/?prompt={content}&model=vertical'
