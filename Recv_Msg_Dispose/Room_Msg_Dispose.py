@@ -238,7 +238,8 @@ class Room_Msg_Dispose:
             self.wcf.send_text(msg=hupu_msg[0], receiver=msg.roomid, aters=msg.sender)
             self.wcf.send_text(msg=hupu_msg[1], receiver=msg.roomid, aters=msg.sender)
         #
-        if self.judge_keyword(keyword=["美女", "妹子", "小姐姐", "小迷妹"], msg=msg.content.strip(), list_bool=True,
+        if self.judge_keyword(keyword=["美女", "妹子", "小姐姐", "小迷妹", "宝贝", "宝贝儿"], msg=msg.content.strip(),
+                              list_bool=True,
                               equal_bool=True):
             content = msg.content.strip()
             msgList = ["谁在叫我", "喊我干嘛", f'{content}来啦', f'我是{content} 什么事',
