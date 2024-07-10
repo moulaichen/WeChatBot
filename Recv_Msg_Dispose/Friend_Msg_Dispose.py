@@ -8,8 +8,14 @@ from threading import Thread
 from OutPut import OutPut
 import yaml
 import os
+import re
 
-from Recv_Msg_Dispose.Room_Msg_Dispose import check_img_tag
+img_dir = "..\\img"
+
+
+def check_img_tag(text):
+    pattern = re.compile(r'<img.*?>', re.DOTALL)
+    return bool(pattern.search(text))
 
 
 class Friend_Msg_Dispose:
@@ -53,10 +59,6 @@ class Friend_Msg_Dispose:
             Thread(target=self.forward_cesimsg, name='转发图片给群聊', args=(msg,)).start()
         elif msg.sender in mes_wx_id and check_img_tag(msg.content.strip()):
             Thread(target=self.forward_qunmsg, name='转发图片给群聊', args=(msg,)).start()
-        # elif msg.sender in ["wxid_hzicw1nyk8dy22"] and msg.type == 49:
-        #     Thread(target=self.forward_ltjl, name='转发聊天记录给群聊', args=(msg,)).start()
-        # elif msg.sender in mes_wx_id and msg.type == 49:
-        #     Thread(target=self.forward_ltjl, name='转发聊天记录给群聊', args=(msg,)).start()
         # 处理好友红包, 转发消息给主人
         elif msg.type == 10000 and '收到红包，请在手机上查看' in msg.content.strip():
             Thread(target=self.Forward_Msg, name="转发红包消息", args=(msg,)).start()
@@ -149,6 +151,7 @@ class Friend_Msg_Dispose:
                 OutPut.outPut(f'[~]: 红包消息转发小问题, 问题不大 ~~~')
 
     def forward_cesimsg(self, msg):
+
         save_path = self.save_wei_image(msg)
         isTure = True
         if save_path == "":
@@ -196,6 +199,21 @@ class Friend_Msg_Dispose:
     def save_wei_image(self, msg):
         sleep(1)
         save_path = self.Cache_path + '/Pic_Cache/'
+        max_num = 10
+        retries = 0
+        save_path_new = ""
+        while retries < max_num:
+            save_path_new = self.wcf.download_image(msg.id, msg.extra, save_path)
+            if save_path_new != "":  # 如果返回非空字符串，跳出循环
+                break
+            retries += 1
+        if save_path_new == "":  # 如果达到最大重试次数仍然失败，可以处理错误
+            print("已达最大下载次数。。。。")
+        return save_path_new
+
+    def save_all_image(self, msg):
+        sleep(1)
+        save_path = self.Cache_path + '/All_Image_Qun_Cache/'
         max_num = 10
         retries = 0
         save_path_new = ""

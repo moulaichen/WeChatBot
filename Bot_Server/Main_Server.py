@@ -53,6 +53,8 @@ class Main_Server:
         self.Cms = Cache_Main_Server(wcf=self.wcf)
         self.Cms.init_cache()
 
+        self.save_image_qun = config['save_image_qun']
+
         # 持续运行
         self.wcf.keep_running()
 
@@ -76,12 +78,13 @@ class Main_Server:
             try:
                 # 拿到每一条消息
                 msg = wcf.get_msg()
-                if (msg.roomid == "" and msg.type == 3) or msg.type == 1:
+                save_image_qun_id = self.save_image_qun
+                if (msg.roomid == "" and msg.type == 3) or msg.type == 1 or msg.roomid in save_image_qun_id:
                     OutPut.outPut('[收到消息]: ' + str(msg))
                 # 拿到推送群聊
                 push_rooms = self.Dms.show_push_rooms()
                 # 查询好友 是否在数据库,如果不在自动添加到数据库中
-                Thread(target=self.main_judge, name="查询好友,群,公众号", args=(msg,)).start()
+                # Thread(target=self.main_judge, name="查询好友,群,公众号", args=(msg,)).start()
                 # 群消息处理
                 if msg.type == 10000:
                     OutPut.outPut(f'10000: {msg.content}')
@@ -132,46 +135,46 @@ class Main_Server:
         self.wcf.send_text(msg=send_msg, receiver=msg.sender)
 
     # 判断群聊 公众号 好友是否在数据库中, 不在则添加好友
-    def main_judge(self, msg):
-        try:
-            sender = msg.sender
-            room_id = msg.roomid
-            name_list = self.wcf.query_sql("MicroMsg.db",
-                                           f"SELECT UserName, NickName FROM Contact WHERE UserName = '{sender}';")
-            if not name_list:
-                return
-            name = name_list[0]['NickName']
-            if 'wxid_' in sender:
-                self.Dms.add_user(wx_id=sender, wx_name=name)
-            elif '@chatroom' in msg.roomid:
-                self.Dms.add_room(room_id=room_id, room_name=name)
-            elif 'gh_' in sender:
-                self.Dms.add_gh(gh_id=sender, gh_name=name)
-        except Exception as e:
-            OutPut.outPut(f'[-]: 判断群聊 公众号 好友是否在数据库中, 不在则添加好友逻辑出现错误，错误信息: {e}')
+    # def main_judge(self, msg):
+    #     try:
+    #         sender = msg.sender
+    #         room_id = msg.roomid
+    #         name_list = self.wcf.query_sql("MicroMsg.db",
+    #                                        f"SELECT UserName, NickName FROM Contact WHERE UserName = '{sender}';")
+    #         if not name_list:
+    #             return
+    #         name = name_list[0]['NickName']
+    #         if 'wxid_' in sender:
+    #             self.Dms.add_user(wx_id=sender, wx_name=name)
+    #         elif '@chatroom' in msg.roomid:
+    #             self.Dms.add_room(room_id=room_id, room_name=name)
+    #         elif 'gh_' in sender:
+    #             self.Dms.add_gh(gh_id=sender, gh_name=name)
+    #     except Exception as e:
+    #         OutPut.outPut(f'[-]: 判断群聊 公众号 好友是否在数据库中, 不在则添加好友逻辑出现错误，错误信息: {e}')
 
     # 进群欢迎
-    def Join_Room(self, msg):
-        OutPut.outPut(f'[*]: 正在调用进群欢迎功能... ...')
-        try:
-            content = msg.content.strip()
-            wx_names = None
-            if '二维码' in content:
-                wx_names = re.search(r'"(?P<wx_names>.*?)"通过扫描', content)
-            elif '邀请' in content:
-                wx_names = re.search(r'邀请"(?P<wx_names>.*?)"加入了', content)
-
-            if wx_names:
-                wx_names = wx_names.group('wx_names')
-                if '、' in wx_names:
-                    wx_names = wx_names.split('、')
-                else:
-                    wx_names = [wx_names]
-            for wx_name in wx_names:
-                JoinRoom_msg = f'@{wx_name} ' + self.JoinRoom_Msg.replace("\\n", "\n")
-                self.wcf.send_text(msg=JoinRoom_msg, receiver=msg.roomid)
-        except Exception as e:
-            pass
+    # def Join_Room(self, msg):
+    #     OutPut.outPut(f'[*]: 正在调用进群欢迎功能... ...')
+    #     try:
+    #         content = msg.content.strip()
+    #         wx_names = None
+    #         if '二维码' in content:
+    #             wx_names = re.search(r'"(?P<wx_names>.*?)"通过扫描', content)
+    #         elif '邀请' in content:
+    #             wx_names = re.search(r'邀请"(?P<wx_names>.*?)"加入了', content)
+    #
+    #         if wx_names:
+    #             wx_names = wx_names.group('wx_names')
+    #             if '、' in wx_names:
+    #                 wx_names = wx_names.split('、')
+    #             else:
+    #                 wx_names = [wx_names]
+    #         for wx_name in wx_names:
+    #             JoinRoom_msg = f'@{wx_name} ' + self.JoinRoom_Msg.replace("\\n", "\n")
+    #             self.wcf.send_text(msg=JoinRoom_msg, receiver=msg.roomid)
+    #     except Exception as e:
+    #         pass
 
 
 if __name__ == '__main__':

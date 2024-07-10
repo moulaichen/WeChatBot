@@ -1,20 +1,16 @@
 import json
-import re
-
-import Api_Server.SparkApi as SparkApi
-from urllib.parse import urljoin
-from OutPut import OutPut
-from lxml import etree
-import feedparser
-import requests
-import datetime
-import urllib3
-import qianfan
-import random
-import yaml
-import time
 import os
-import http.client
+import random
+import re
+import time
+
+import qianfan
+import requests
+import urllib3
+import yaml
+from PIL import Image
+
+from OutPut import OutPut
 
 
 class Api_Main_Server:
@@ -468,129 +464,6 @@ class Api_Main_Server:
             OutPut.outPut(msg)
             return msg
 
-    # 舔狗日记
-    def get_dog(self):
-        OutPut.outPut('[*]: 正在调用舔狗日记API接口... ...')
-        url = self.Dog_Api.format(self.Key)
-        try:
-            json_data = requests.get(url=url, headers=self.headers, timeout=20, verify=False).json()
-            if json_data['code'] == 200 and json_data['msg'] == 'success':
-                msg = json_data['result']['content'].strip()
-            else:
-                OutPut.outPut(f'[~]: 舔狗日记接口出了点小问题... ...')
-                msg = self.get_dog()
-        except Exception as e:
-            msg = f'[-]: 舔狗日记API接口出现错误，错误信息：{e}'
-            OutPut.outPut(msg)
-            return msg
-        OutPut.outPut(f'[+]: 舔狗日记API接口调用成功！！！')
-        return msg
-
-    # 星座查询
-    def get_constellation(self, content):
-        OutPut.outPut('[*]: 正在调用星座查询API接口... ...')
-        constellation = content.split(' ')[-1]
-        msg = ''
-        if '座' not in constellation:
-            constellation += '座'
-        url = self.Constellation_Api.format(self.Key, constellation)
-        try:
-            json_data = requests.get(url=url, timeout=20, verify=False).json()
-            if json_data['code'] != 200 and json_data['msg'] != 'success':
-                msg = '星座查询错误, 请确保输入正确！'
-                return msg
-            for news in json_data['result']['list']:
-                msg += news['type'] + '：' + news['content'] + '\n'
-            msg = f'\n星座：{constellation}\n' + msg.strip() + f"\n{'By: #' + self.system_copyright if self.system_copyright else ''}"
-            OutPut.outPut(f'[+]: 星座查询API接口调用成功！！！')
-        except Exception as e:
-            msg = f'[-]: 星座查询接口出现错误, 错误信息：{e}'
-            OutPut.outPut(msg)
-        return msg
-
-    # 早安寄语
-    def get_morning(self):
-        OutPut.outPut('[*]: 正在调用早安寄语API接口... ...')
-        url = self.Morning_Api.format(self.Key)
-        try:
-            json_data = requests.get(url=url, timeout=30, verify=False).json()
-            if json_data['code'] != 200 and json_data['msg'] != 'success':
-                msg = f'[~]: 早安寄语接口出现错误, 错误信息请查看日志 ~~~~~~'
-                return msg
-            content = json_data['result']['content']
-            OutPut.outPut(f'[+]: 早安寄语API接口调用成功！！！')
-            return content
-        except Exception as e:
-            msg = f'[-]: 早安寄语接口出现错误, 错误信息：{e}'
-            OutPut.outPut(msg)
-
-    # 摸鱼日记
-    def get_fish(self):
-        OutPut.outPut(f'[*]: 正在调用摸鱼日记接口... ...')
-        save_path = self.Cache_path + '/Fish_Cache/' + str(int(time.time() * 1000)) + '.jpg'
-        try:
-            pic_data = requests.get(url=self.Fish_Api, headers=self.headers, timeout=30, verify=False).content
-            with open(file=save_path, mode='wb') as pd:
-                pd.write(pic_data)
-        except Exception as e:
-            msg = f'[-]: 摸鱼日记API接口出现错误，错误信息：{e}\n正在回调中... ...'
-            OutPut.outPut(msg)
-            save_path = self.get_fish()
-        OutPut.outPut(f'[+]: 摸鱼日记API接口调用成功！！！')
-        return save_path
-
-    # Whois查询
-    def get_whois(self, content):
-        OutPut.outPut('[*]: 正在调用Whois查询API接口... ...')
-        domain = content.split(' ')[-1]
-        url = self.Whois_Api.format(domain)
-        try:
-            data = requests.get(url=url, timeout=30, verify=False).text
-            if not data:
-                msg = f'[~]: Whois查询接口出现错误, 错误信息请查看日志 ~~~~~~'
-                return msg
-            content = data.replace('<pre>', '').replace('</pre>',
-                                                        '').strip() + f"\n{'By: #' + self.system_copyright if self.system_copyright else ''}"
-            OutPut.outPut(f'[+]: Whois查询API接口调用成功！！！')
-            return content
-        except Exception as e:
-            msg = f'[-]: Whois查询接口出现错误, 错误信息：{e}'
-            OutPut.outPut(msg)
-
-    # 归属地查询
-    def get_attribution(self, content):
-        OutPut.outPut('[*]: 正在调用归属地查询API接口... ...')
-        phone = content.split(' ')[-1]
-        url = self.Attribution_Api.format(phone)
-        try:
-            json_data = requests.get(url=url, timeout=30, verify=False).json()
-            if not json_data["data"]["province"]:
-                msg = f'[~]: 归属地查询接口出现错误, 错误信息请查看日志 ~~~~~~'
-                return msg
-            msg = f'\n===== 查询信息 =====\n手机号码: {phone}\n省份: {json_data["data"]["province"]}\n城市: {json_data["data"]["city"]}\n运营商: {json_data["data"]["sp"]}\n{"By: #" + self.system_copyright if self.system_copyright else ""}\n================='
-            OutPut.outPut(f'[+]: 归属地查询API接口调用成功！！！')
-            return msg
-        except Exception as e:
-            msg = f'[-]: 归属地查询接口出现错误, 错误信息：{e}'
-            OutPut.outPut(msg)
-
-    # 备案查询
-    def get_icp(self, content):
-        OutPut.outPut('[*]: 正在调用备案查询API接口... ...')
-        domain = content.split(' ')[-1]
-        url = self.Icp_Api.format(domain)
-        try:
-            json_data = requests.get(url=url, timeout=30, verify=False).json()
-            if 'error' in json_data.keys():
-                msg = f'此域名未备案！！！'
-                return msg
-            msg = f'======== 查询信息 ========\nICP备案号: {json_data["icp"]}\n备案主体: {json_data["unitName"]}\n备案类型: {json_data["natureName"]}\n{"By: #" + self.system_copyright if self.system_copyright else ""}\n========================'
-            OutPut.outPut(f'[+]: 备案查询API接口调用成功！！！')
-            return msg
-        except Exception as e:
-            msg = f'[-]: 备案查询接口出现错误, 错误信息：{e}'
-            OutPut.outPut(msg)
-
     # 疯狂星期四文案
     def get_kfc(self):
         OutPut.outPut('[*]: 正在调用疯狂星期四文案API接口... ...')
@@ -627,192 +500,54 @@ class Api_Main_Server:
             msg = f'[-]: 周公解梦接口出现错误, 错误信息：{e}'
             OutPut.outPut(msg)
 
-    # Md5查询
-    def get_md5(self, content):
-        ciphertext = content.strip().split(' ')[-1]
-        OutPut.outPut('[*]: 正在调用MD5解密对话API接口... ...')
+    def get_image_all(self):
+        OutPut.outPut('[*]: 正在整合图片... ...')
+        save_path = self.Cache_path + '/All_Image_Cache/' + str(int(time.time() * 1000)) + '.jpg'
+        folder_path = self.Cache_path + '/All_Image_Qun_Cache/'
+        image_size = (1000, 1500)
+        images_per_row = 3
         try:
-            resp = requests.get(url=self.Somd5_Md5_url.format(self.Somd5_Key, ciphertext), verify=False, timeout=10)
+            images = self.get_images_from_folder(folder_path)
+            resized_images = self.resize_images(images, image_size)
+            result_image = self.concatenate_images(resized_images, images_per_row, image_size)
+            result_image.save(save_path)
         except Exception as e:
-            OutPut.outPut(f'[-]: MD5解密接口错误，错误信息：{e}')
-            return f'[-]: MD5解密接口错误，错误信息：{e}'
-        msg = f'\n======== MD5查询信息 =======\n密文: {ciphertext}\n明文: {resp.text}\n数据来源: #SOMD5\nBy: #{self.system_copyright if self.system_copyright else ""}\n========================'
-        return msg
+            msg = f'[-]: 整合图片出现错误, 错误信息：{e}'
+            save_path = self.get_image_all()
+            OutPut.outPut(msg)
+        return save_path
 
-    # 微步IP查询
-    def get_threatbook_ip(self, content):
-        ip = content.split(' ')[-1]
-        OutPut.outPut(f'[*]: 正在调用微步IP查询API接口... ...')
-        if len(content) > 0 and ip:
-            search_ip = ip
-            ips = str(search_ip).split('.')
-            continuous_bool = True if [i for i in ips if ips[0] != i] else False
-            if ips[0] in ['127', '192', '0', '224', '240', '255'] or \
-                    search_ip in ['1.1.1.1', '2.2.2.2', '3.3.3.3', '4.4.4.4', '5.5.5.5', '6.6.6.6', '7.7.7.7',
-                                  '8.8.8.8', '9.9.9.9', '10.10.10.10'] or \
-                    '.'.join(ips[0:2]) in ['169.254', '100.64', '198.51', '198.18', '172.16'] or \
-                    '.'.join(ips[0:3]) in ['203.0.113'] or \
-                    ips[-1] in ['255', '254']:
-                msg = "[微笑]暂不支持查询该地址!"
-                return msg
-            if not continuous_bool:
-                msg = "[微笑]暂不支持查询该地址!"
-                return msg
-            try:
-                data = {
-                    "apikey": self.ThreatBook_Key,
-                    "resource": search_ip,
-                }
+    # 获取收集的所有图片
+    def get_images_from_folder(self, folder_path):
+        images = []
+        for file_name in os.listdir(folder_path):
+            if file_name.endswith(('png', 'jpg', 'jpeg', 'bmp', 'gif')):
+                img_path = os.path.join(folder_path, file_name)
+                img = Image.open(img_path)
+                images.append(img)
+        return images
 
-                resp = requests.post(
-                    self.ThreatBook_Api,
-                    data=data,
-                    timeout=10,
-                    verify=False,
-                )
-                if resp.status_code == 200 and resp.json()["response_code"] == 0:
-                    # 查风险等级
-                    sec_level = resp.json()["data"]["{}".format(search_ip)]["severity"]
-                    # 查是否恶意IP
-                    is_malicious = resp.json()["data"]["{}".format(search_ip)]["is_malicious"]
-                    # 查可信度
-                    confidence_level = resp.json()["data"]["{}".format(search_ip)]["confidence_level"]
-                    # 查IP归属国家
-                    country = resp.json()["data"]["{}".format(search_ip)]["basic"]["location"][
-                        "country"
-                    ]
-                    # 查IP归属省份
-                    province = resp.json()["data"]["{}".format(search_ip)]["basic"]["location"][
-                        "province"
-                    ]
-                    # 查IP归属城市
-                    city = resp.json()["data"]["{}".format(search_ip)]["basic"]["location"]["city"]
-                    # 将IP归属的国家、省份、城市合并成一个字符串
-                    location = country + "-" + province + "-" + city
-                    # 查威胁类型
-                    judgments = ""
-                    for j in resp.json()["data"]["{}".format(search_ip)]["judgments"]:
-                        judgments += j + " "
-                    if is_malicious:
-                        is_malicious_msg = "是"
-                    else:
-                        is_malicious_msg = "否"
-                    msg = f"\n===================\n[+]ip：{search_ip}\n[+]风险等级：{sec_level}\n[+]是否为恶意ip：{is_malicious_msg}\n[+]可信度：{confidence_level}\n[+]威胁类型：{str(judgments)}\n[+]ip归属地：{location}\n更新时间：{resp.json()['data']['{}'.format(search_ip)]['update_time']}\n{'By: #' + self.system_copyright if self.system_copyright else ''}\n==================="
-                else:
-                    msg = f"[-]: 查询失败，返回信息：{resp.json()['verbose_msg']}"
-                    OutPut.outPut(msg)
-            except Exception as e:
-                OutPut.outPut(f"[-]: 微步IP查询出错，错误信息：{e}")
-                msg = f"[-]: 查询出错请稍后重试，错误信息：{e}"
-            return msg
+    # 设置图片尺寸
+    def resize_images(self, images, size):
+        resized_images = []
+        for img in images:
+            resized_images.append(img.resize(size, Image.LANCZOS))
+        return resized_images
 
-    # 端口查询
-    def get_portScan(self, content):
-        ip = content.split(' ')[-1]
-        OutPut.outPut(f'[*]: 正在调用端口查询API接口... ...')
-        ports_info = ""
-        msg = ''
-        try:
-            json_data = requests.get(url=self.Port_Scan_Api.format(ip)).json()
-            for port in json_data['ports']:
-                port_info = '{}-{}-{}'.format(port['port'], port['base_protocol'], port['protocol'])
-                ports_info += port_info + "\n"
-            msg = f'\n=====端口开放情况=====\nIP地址: {json_data["ip"]}\n{ports_info}{"By: #" + self.system_copyright if self.system_copyright else ""}\n================'
-        except Exception as e:
-            OutPut.outPut(f'[-]: 端口查询API接口出现错误，错误信息: {e}')
-        if msg:
-            return msg
-        else:
-            return '端口查询失败, 具体原因请看日志... ...'
+    # 拼接
+    def concatenate_images(self, images, images_per_row, size):
+        num_images = len(images)
+        total_width = images_per_row * size[0]
+        rows = (num_images + images_per_row - 1) // images_per_row  # 计算行数
+        total_height = rows * size[1]
 
-    # 早报
-    def get_freebuf_news(self, ):
-        yesterday = (datetime.date.today() + datetime.timedelta(-1))
-        morning_time = yesterday.strftime("%a, %d %b %Y", )
-        str_list = "#FreeBuf早报\n"
-        try:
-            rs1 = feedparser.parse('https://www.freebuf.com/feed')
-            for ent in rs1['entries']:
-                if morning_time in ent['published']:
-                    title = ent['title']
-                    link = ent['link']
-                    str_list += '\n' + title + '\n' + link + '\n'
-            if 'http' not in str_list:
-                str_list += '\n今日暂无文章'
-        except Exception as e:
-            link6 = "\n今日暂无文章"
-            str_list += link6
-            OutPut.outPut("[-]: 获取FreeBuf早报出错，错误信息： {}".format(e))
-        str_list += f"\n{self.system_copyright + '整理分享，更多内容请戳 #' + self.system_copyright if self.system_copyright else ''}\n{time.strftime('%Y-%m-%d %X')}"
-        return str_list
+        new_image = Image.new('RGB', (total_width, total_height))
+        for index, img in enumerate(images):
+            x_offset = (index % images_per_row) * size[0]
+            y_offset = (index // images_per_row) * size[1]
+            new_image.paste(img, (x_offset, y_offset))
 
-    # 获取先知社区文章
-    def get_xz_news(self, news_list):
-        news_list = "#先知社区"
-        try:
-            rs1 = feedparser.parse('https://xz.aliyun.com/feed')
-            for ent in rs1['entries']:
-                if str(time.strftime('%Y-%m-%d')) in ent['published']:
-                    title = ent['title']
-                    link = ent['link']
-                    news_list += '\n' + title + '\n' + link + '\n'
-            if 'http' not in news_list:
-                news_list += '\n今日暂无文章\n'
-        except Exception as e:
-            link6 = "\n今日暂无文章\n"
-            news_list += link6
-            OutPut.outPut("[-]: 获取先知社区文章出错，错误信息: {}".format(e))
-        return news_list
-
-    # 获取奇安信攻防社区文章
-    def get_qax_news(self, news_list):
-        news_list += "\n#奇安信攻防社区"
-        try:
-            rs1 = feedparser.parse('https://forum.butian.net/Rss')
-            for ent in rs1['entries']:
-                if str(time.strftime('%Y-%m-%d')) in ent['published']:
-                    title = ent['title']
-                    link = ent['link']
-                    news_list += '\n' + title + '\n' + link + '\n'
-            if 'http' not in news_list:
-                news_list += '\n今日暂无文章\n'
-        except Exception as e:
-            link6 = "\n今日暂无文章\n"
-            news_list += link6
-            OutPut.outPut("[-]: 获取奇安信攻防社区文章出错，错误信息: {}".format(e))
-        return news_list
-
-    # 获取安全客文章
-    def get_anquanke_news(self, news_list):
-        news_list += "\n#安全客"
-        try:
-            resp = requests.get('https://www.anquanke.com/knowledge', timeout=5, verify=False)
-            tree = etree.HTML(resp.text)
-            divs = tree.xpath('//div[@class="article-item common-item"]/div')
-            for div in divs:
-                href = urljoin('https://www.anquanke.com/knowledge', div.xpath('.//div[@class="title"]/a/@href')[0])
-                title = div.xpath('.//div[@class="title"]/a/text()')[0].strip()
-                publish_time = div.xpath('.//span[@style="vertical-align: middle;"]/text()')[1]
-                if str(time.strftime('%Y-%m-%d')) in publish_time:
-                    news_list += '\n' + title + '\n' + href + '\n'
-            if 'http' not in news_list:
-                news_list += '\n今日暂无文章\n'
-        except Exception as e:
-            link6 = "\n今日暂无文章\n"
-            news_list += link6
-            OutPut.outPut("[-]: 获取安全客文章出错，错误信息: {}".format(e))
-        return news_list
-
-    # 获取各平台安全文章
-    def get_safety_news(self, ):
-        news_list = ''
-        OutPut.outPut("[+]:正在爬取安全新闻... ...")
-        news_list = self.get_xz_news(news_list)
-        news_list = self.get_qax_news(news_list)
-        news_list = self.get_anquanke_news(news_list)
-        OutPut.outPut("[+]:获取各平台安全文章成功！！！")
-        news_list += f"\n{self.system_copyright + '整理分享，更多内容请戳 #' + self.system_copyright if self.system_copyright else ''}\n{time.strftime('%Y-%m-%d %X')}"
-        return news_list.strip()
+        return new_image
 
     def get_hupu(self):
         OutPut.outPut('[*]: 正在调用虎扑热搜API接口... ...')

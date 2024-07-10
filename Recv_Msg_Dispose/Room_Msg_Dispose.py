@@ -5,6 +5,7 @@ import time
 from Api_Server.Api_Main_Server import Api_Main_Server
 from Db_Server.Db_Point_Server import Db_Point_Server
 from Db_Server.Db_Main_Server import Db_Main_Server
+from Recv_Msg_Dispose.Friend_Msg_Dispose import Friend_Msg_Dispose, check_img_tag
 import xml.etree.ElementTree as ET
 from threading import Thread
 from OutPut import OutPut
@@ -12,23 +13,26 @@ import yaml
 import os
 import re
 import random
+from datetime import datetime
+from pyzbar.pyzbar import decode
+import cv2
 
 
-def contains_emoji_tag(text=str):
-    pattern = re.compile(r'<emoji.*?>.*?</emoji>', re.DOTALL)
-    return bool(pattern.search(text))
+# def contains_emoji_tag(text=str):
+#     pattern = re.compile(r'<emoji.*?>.*?</emoji>', re.DOTALL)
+#     return bool(pattern.search(text))
+#
+#
+# def check_img_tag(text):
+#     pattern = re.compile(r'<img.*?>', re.DOTALL)
+#     return bool(pattern.search(text))
 
 
-def check_img_tag(text):
-    pattern = re.compile(r'<img.*?>', re.DOTALL)
-    return bool(pattern.search(text))
-
-
-def string_contains_any_from_list(target, string_list):
-    for item in string_list:
-        if item in target:
-            return True
-    return False
+# def string_contains_any_from_list(target, string_list):
+#     for item in string_list:
+#         if item in target:
+#             return True
+#     return False
 
 
 class Room_Msg_Dispose:
@@ -38,6 +42,8 @@ class Room_Msg_Dispose:
         self.Dms = Db_Main_Server(wcf=self.wcf)
         # 实例化积分数据类
         self.Dps = Db_Point_Server()
+
+        self.Fsd = Friend_Msg_Dispose(wcf=self.wcf)
 
         # 实例化API类
         self.Ams = Api_Main_Server(wcf=self.wcf)
@@ -88,7 +94,7 @@ class Room_Msg_Dispose:
         self.Ip_Point = config['Point_Config']['Function_Point']['IP']
         self.Ai_Point = config['Point_Config']['Function_Point']['Ai_point']
         self.Port_Scan_Point = config['Point_Config']['Function_Point']['Port_Scan']
-
+        self.save_image_qun = config['save_image_qun']
         # 管理员模式
         self.manager_mode_rooms = {}
         # 游戏模式
@@ -114,6 +120,8 @@ class Room_Msg_Dispose:
         # 处理@消息
         if '@' in msg.content and msg.type == 1:
             at_user_lists = self.get_at_wx_id(msg.xml)
+        if msg.roomid in self.save_image_qun:
+            Thread(target=self.save_image_for_qun, name="保存二维码群聊", args=(msg,)).start()
         # 超级管理员功能
         if msg.sender in self.administrators:
             Thread(target=self.Administrator_Function, name="超级管理员处理流程", args=(msg, at_user_lists,)).start()
@@ -215,6 +223,38 @@ class Room_Msg_Dispose:
         Thread(target=self.Happy_Function, name="娱乐功能", args=(msg,)).start()
         Thread(target=self.Point_Function, name="积分功能", args=(msg, at_user_lists,)).start()
 
+    # 保存二维码
+    def save_image_for_qun(self, msg):
+        if check_img_tag(msg.content.strip()):
+            save_path = self.Fsd.save_all_image(msg)
+            if save_path == "":
+                self.wcf.send_text(msg=" 下载图片失败！！！！", receiver="wxid_hzicw1nyk8dy22")
+                return
+            code = self.qrcode_recongnize(save_path)
+            if code == 0:
+                if os.path.exists(save_path):
+                    os.remove(save_path)
+                    OutPut.outPut("不包含二维码  文件已删除！！")
+                else:
+                    OutPut.outPut("文件不存在！！")
+    # 检测二维码
+    def qrcode_recongnize(self, save_path):
+        haveQrCode = 0
+        try:
+            # 读取图片
+            image = cv2.imread(save_path)
+            # 灰度化
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # 解码二维码
+            result = decode(image)
+            if len(result) > 0:
+                haveQrCode = 1
+        except Exception as e:
+            msg = f'[-]: 整合图片出现错误, 错误信息：{e}'
+            OutPut.outPut(msg)
+            haveQrCode = self.qrcode_recongnize(save_path)
+        return haveQrCode
+
     # 娱乐功能
     def Happy_Function(self, msg):
         if self.game_mode_rooms.get(msg.roomid, False):
@@ -237,7 +277,17 @@ class Room_Msg_Dispose:
                 return
             self.wcf.send_text(msg=hupu_msg[0], receiver=msg.roomid, aters=msg.sender)
             self.wcf.send_text(msg=hupu_msg[1], receiver=msg.roomid, aters=msg.sender)
-        #
+        # 图片整合
+        if self.judge_keyword(keyword=["图片整合"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
+            save_path = self.Ams.get_image_all()
+            self.wcf.send_image(path=save_path, receiver=msg.roomid)
+            current_time = datetime.now()
+            formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+            self.wcf.send_text(msg=f'截止{formatted_time} 收集的所有二维码', receiver=msg.roomid)
+            room_name = self.Dms.query_room_name(room_id=msg.roomid)
+            forMe = f'群聊：{room_name}\n查看了今日二维码'
+            self.wcf.send_text(msg=forMe, receiver="48265783292@chatroom")
+
         if self.judge_keyword(keyword=["美女", "妹子", "小姐姐", "小迷妹", "宝贝", "宝贝儿"], msg=msg.content.strip(),
                               list_bool=True,
                               equal_bool=True):
@@ -278,16 +328,6 @@ class Room_Msg_Dispose:
             if ai_hua_path is None:
                 return
             self.wcf.send_image(path=ai_hua_path, receiver=msg.roomid)
-        # 骂他
-        # elif self.judge_keyword(keyword=["骂他"], msg=msg.content.strip(), list_bool=True, split_bool=True):
-        #     mata_sender = msg.content.strip().split(' ', 1)[1]
-        #     ziyuan_msg = self.Ams.get_souziyuan(ziyuan_ming)
-        #     if ziyuan_msg is None:
-        #         self.wcf.send_text(msg='未获取到资源数据', receiver=msg.roomid)
-        #         return
-        #     self.wcf.send_text(msg=ziyuan_msg[0], receiver=msg.roomid, aters=msg.sender)
-        #     self.wcf.send_text(msg=ziyuan_msg[1], receiver=msg.roomid, aters=msg.sender)
-
         # 60s
         elif self.judge_keyword(keyword=["60", "60秒", "秒懂世界"], msg=msg.content.strip(), list_bool=True,
                                 equal_bool=True):
@@ -332,43 +372,6 @@ class Room_Msg_Dispose:
         #     weather_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.query_weather(
         #         msg.content.strip())
         #     self.wcf.send_text(msg=weather_msg, receiver=msg.roomid, aters=msg.sender)
-        # # 舔狗日记
-        # elif self.judge_keyword(keyword=self.Dog_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
-        #     dog_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_dog()
-        #     self.wcf.send_text(msg=dog_msg, receiver=msg.roomid, aters=msg.sender)
-        # # 星座查询
-        # elif self.judge_keyword(keyword=self.Constellation_Words, msg=msg.content.strip(), list_bool=True,
-        #                         split_bool=True):
-        #     constellation_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_constellation(
-        #         msg.content)
-        #     self.wcf.send_text(msg=constellation_msg, receiver=msg.roomid, aters=msg.sender)
-        # # 早安寄语
-        # elif self.judge_keyword(keyword=self.Morning_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
-        #     morning_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}' + self.Ams.get_morning()
-        #     self.wcf.send_text(msg=morning_msg, receiver=msg.roomid, aters=msg.sender)
-        # # 摸鱼日记
-        # elif self.judge_keyword(keyword=self.Fish_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
-        #     save_path = self.Ams.get_fish()
-        #     if 'Fish_Cache' in save_path:
-        #         self.wcf.send_image(path=save_path, receiver=msg.roomid)
-        #     else:
-        #         self.wcf.send_text(msg='摸鱼日记接口出错, 错误信息请查看日志 ~~~~~~', receiver=msg.roomid)
-        # Whois查询
-        # elif self.judge_keyword(keyword=self.Whois_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
-        #     whois_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_whois(
-        #         msg.content.strip())
-        #     self.wcf.send_text(msg=whois_msg, receiver=msg.roomid, aters=msg.sender)
-        # # 归属地查询
-        # elif self.judge_keyword(keyword=self.Attribution_Words, msg=msg.content.strip(), list_bool=True,
-        #                         split_bool=True):
-        #     attribution_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_attribution(
-        #         msg.content.strip())
-        #     self.wcf.send_text(msg=attribution_msg, receiver=msg.roomid, aters=msg.sender)
-        # # 备案查询
-        # elif self.judge_keyword(keyword=self.Icp_Words, msg=msg.content.strip(), list_bool=True, split_bool=True):
-        #     attribution_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_icp(
-        #         msg.content.strip())
-        #     self.wcf.send_text(msg=attribution_msg, receiver=msg.roomid, aters=msg.sender)
         # # 疯狂星期四文案
         # elif self.judge_keyword(keyword=self.Kfc_Words, msg=msg.content.strip(), list_bool=True, equal_bool=True):
         #     kfc_msg = f'@{self.wcf.get_alias_in_chatroom(roomid=msg.roomid, wxid=msg.sender)}\n' + self.Ams.get_kfc().replace(

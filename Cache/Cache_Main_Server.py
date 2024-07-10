@@ -9,6 +9,8 @@ class Cache_Main_Server:
         self.video_cache = current_path + '/Video_Cache'
         self.fish_cache = current_path + '/Fish_Cache'
         self.pic_cache = current_path + '/Pic_Cache'
+        self.All_Image_Cache = current_path + '/All_Image_Cache'
+        self.All_Image_Qun_Cache = current_path + '/All_Image_Qun_Cache'
 
     # 初始化缓存文件夹
     def init_cache(self):
@@ -18,6 +20,8 @@ class Cache_Main_Server:
                 os.mkdir(self.video_cache)
                 os.mkdir(self.pic_cache)
                 os.mkdir(self.fish_cache)
+                os.mkdir(self.All_Image_Cache)
+                os.mkdir(self.All_Image_Qun_Cache)
                 OutPut.outPut(f'[+]: 缓存文件夹初始化成功！！！')
             except Exception as e:
                 msg = '[-]: 创建文件夹出错，错误信息：{}'.format(e)
@@ -35,6 +39,8 @@ class Cache_Main_Server:
                 file_lists += [self.video_cache + '/' + file for file in os.listdir(self.video_cache)]
                 file_lists += [self.fish_cache + '/' + file for file in os.listdir(self.fish_cache)]
                 file_lists += [self.pic_cache + '/' + file for file in os.listdir(self.pic_cache)]
+                file_lists += [self.All_Image_Cache + '/' + file for file in os.listdir(self.All_Image_Cache)]
+                file_lists += [self.All_Image_Qun_Cache + '/' + file for file in os.listdir(self.All_Image_Qun_Cache)]
                 for rm_file in file_lists:
                     os.remove(rm_file)
             except Exception as e:

@@ -12,6 +12,9 @@ zhuanfaqun:
 forward_mes_adm:
   - 'love623954275'
 
+save_image_qun:
+  - '43853325508@chatroom'
+
 ## 系统配置
 System_Config:
   # 版权信息
