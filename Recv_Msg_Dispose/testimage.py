@@ -16,6 +16,6 @@ def is_same_image(image1_path, image2_path):
 
 
 # 示例用法
-image1_path = 'D:/APP/PyCharmWorkSpace/WeChatBot/Cache/Pic_Cache/85d2c0e44b934d8e17cbdb9acea0d0c.jpg'
-image2_path = 'D:/APP/PyCharmWorkSpace/WeChatBot/Cache/Pic_Cache/2c1531186ec1f4e61496d19ddb4d9b0.jpg'
+image1_path = 'D:/WeChatBot/Cache/All_Image_Qun_Cache/1f9aa4b85ad74b565533a1252b5b326b.jpg'
+image2_path = 'D:/WeChatBot/Cache/All_Image_Qun_Cache/494877686b9a2f92c9da78ce4734e864.jpg'
 print(is_same_image(image1_path, image2_path))

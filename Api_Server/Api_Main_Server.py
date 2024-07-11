@@ -13,6 +13,27 @@ from PIL import Image
 from OutPut import OutPut
 
 
+# 获取收集的所有图片
+def get_images_from_folder(folder_path):
+    images = []
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith(('png', 'jpg', 'jpeg', 'bmp', 'gif')):
+            img_path = os.path.join(folder_path, file_name)
+            img = Image.open(img_path)
+            images.append(img)
+    return images
+
+
+def get_images_from_all(folder_path):
+    abs_folder_path = os.path.abspath(folder_path)
+    images = []
+    for file_name in os.listdir(abs_folder_path):
+        if file_name.endswith(('png', 'jpg', 'jpeg', 'bmp', 'gif')):
+            img_path = os.path.join(abs_folder_path, file_name)
+            images.append(img_path)
+    return images
+
+
 class Api_Main_Server:
     def __init__(self, wcf):
         self.wcf = wcf
@@ -507,7 +528,7 @@ class Api_Main_Server:
         image_size = (1000, 1500)
         images_per_row = 3
         try:
-            images = self.get_images_from_folder(folder_path)
+            images = get_images_from_folder(folder_path)
             resized_images = self.resize_images(images, image_size)
             result_image = self.concatenate_images(resized_images, images_per_row, image_size)
             result_image.save(save_path)
@@ -516,16 +537,6 @@ class Api_Main_Server:
             save_path = self.get_image_all()
             OutPut.outPut(msg)
         return save_path
-
-    # 获取收集的所有图片
-    def get_images_from_folder(self, folder_path):
-        images = []
-        for file_name in os.listdir(folder_path):
-            if file_name.endswith(('png', 'jpg', 'jpeg', 'bmp', 'gif')):
-                img_path = os.path.join(folder_path, file_name)
-                img = Image.open(img_path)
-                images.append(img)
-        return images
 
     # 设置图片尺寸
     def resize_images(self, images, size):

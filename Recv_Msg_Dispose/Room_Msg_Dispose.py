@@ -1,11 +1,13 @@
+import glob
 import random
 import threading
 import time
 
-from Api_Server.Api_Main_Server import Api_Main_Server
+from Api_Server.Api_Main_Server import Api_Main_Server, get_images_from_all
 from Db_Server.Db_Point_Server import Db_Point_Server
 from Db_Server.Db_Main_Server import Db_Main_Server
 from Recv_Msg_Dispose.Friend_Msg_Dispose import Friend_Msg_Dispose, check_img_tag
+from Api_Server.Api_Main_Server import get_images_from_folder
 import xml.etree.ElementTree as ET
 from threading import Thread
 from OutPut import OutPut
@@ -16,6 +18,9 @@ import random
 from datetime import datetime
 from pyzbar.pyzbar import decode
 import cv2
+from time import sleep
+
+from Recv_Msg_Dispose.testimage import is_same_image
 
 
 # def contains_emoji_tag(text=str):
@@ -95,6 +100,13 @@ class Room_Msg_Dispose:
         self.Ai_Point = config['Point_Config']['Function_Point']['Ai_point']
         self.Port_Scan_Point = config['Point_Config']['Function_Point']['Port_Scan']
         self.save_image_qun = config['save_image_qun']
+        # 获取当前文件路径
+        current_path = os.path.dirname(__file__)
+
+        # 配置缓存文件夹路径
+        current_list_path = current_path.split('\\')
+        current_list_path.pop()
+        self.Cache_path = '/'.join(current_list_path) + '/Cache'
         # 管理员模式
         self.manager_mode_rooms = {}
         # 游戏模式
@@ -226,18 +238,32 @@ class Room_Msg_Dispose:
     # 保存二维码
     def save_image_for_qun(self, msg):
         if check_img_tag(msg.content.strip()):
+            sleep(1)
+            folder_path = self.Cache_path + '/All_Image_Qun_Cache/'
+            imageList = get_images_from_all(folder_path)
             save_path = self.Fsd.save_all_image(msg)
             if save_path == "":
                 self.wcf.send_text(msg=" 下载图片失败！！！！", receiver="wxid_hzicw1nyk8dy22")
                 return
             code = self.qrcode_recongnize(save_path)
+            room_name = self.Dms.query_room_name(room_id=msg.roomid)
             if code == 0:
                 if os.path.exists(save_path):
+                    self.wcf.send_image(path=save_path, receiver="48265783292@chatroom")
+                    self.wcf.send_text(msg=f'群聊：{room_name}\n 不包含二维码  文件已删除！！',
+                                       receiver="48265783292@chatroom")
                     os.remove(save_path)
-                    OutPut.outPut("不包含二维码  文件已删除！！")
+                    return
                 else:
                     OutPut.outPut("文件不存在！！")
-    # 检测二维码
+                    return
+            for image in imageList:
+                isHave = is_same_image(save_path, image)
+                if isHave:
+                    os.remove(save_path)
+                    OutPut.outPut("图片已存在  文件已删除！！")
+                    return
+
     def qrcode_recongnize(self, save_path):
         haveQrCode = 0
         try:
@@ -278,7 +304,7 @@ class Room_Msg_Dispose:
             self.wcf.send_text(msg=hupu_msg[0], receiver=msg.roomid, aters=msg.sender)
             self.wcf.send_text(msg=hupu_msg[1], receiver=msg.roomid, aters=msg.sender)
         # 图片整合
-        if self.judge_keyword(keyword=["图片整合"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
+        if self.judge_keyword(keyword=["今日二维码"], msg=msg.content.strip(), list_bool=True, equal_bool=True):
             save_path = self.Ams.get_image_all()
             self.wcf.send_image(path=save_path, receiver=msg.roomid)
             current_time = datetime.now()
