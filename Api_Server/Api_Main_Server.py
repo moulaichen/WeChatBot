@@ -1,5 +1,4 @@
 import json
-import os
 import random
 import re
 import time
@@ -11,6 +10,9 @@ import yaml
 from PIL import Image
 
 from OutPut import OutPut
+from bs4 import BeautifulSoup
+import os
+import urllib.parse
 
 
 # 获取收集的所有图片
@@ -32,6 +34,17 @@ def get_images_from_all(folder_path):
             img_path = os.path.join(abs_folder_path, file_name)
             images.append(img_path)
     return images
+
+
+def convert_coordinates(coord):
+    lat, lon = coord.split()
+
+    if float(lat) > 90:
+        lat, lon = lon, lat
+
+    lat = lat + "N"
+    lon = lon + "E"
+    return f"{lat}{lon}"
 
 
 class Api_Main_Server:
@@ -537,6 +550,48 @@ class Api_Main_Server:
             save_path = self.get_image_all()
             OutPut.outPut(msg)
         return save_path
+
+    def get_weather_image(self, content):
+        OutPut.outPut('[*]: 正在搜天气... ...')
+        save_path = self.Cache_path + '/Weather_Image_Cache/' + str(int(time.time() * 1000)) + '.jpg'
+        try:
+            image_data = self.select_weather_image(content)
+            if image_data is None:
+                OutPut.outPut("图片下载失败")
+            with open(save_path, 'wb') as f:
+                f.write(image_data)
+        except Exception as e:
+            msg = f'[-]: 搜天气出现错误, 错误信息：{e}'
+            save_path = self.get_weather_image(content)
+            OutPut.outPut(msg)
+        return save_path
+
+    @staticmethod
+    def select_weather_image(content):
+        latitude = convert_coordinates(content)
+        base_url = 'https://www.meteoblue.com/en/weather/week/'
+        coordinates = f'{latitude}'
+        url = f'{base_url}{coordinates}'
+
+        # 发起请求并获取页面内容
+        response = requests.get(url)
+        html_content = response.content
+
+        # 使用BeautifulSoup解析HTML
+        soup = BeautifulSoup(html_content, 'html.parser')
+
+        # 查找所有包含图片的div标签
+        image_div = soup.find('div', class_='bloo meteogram-scrollable')
+
+        img_data = ""
+        if image_div:
+            img_url = image_div.find('img')['data-original']
+            if img_url.startswith('//'):
+                img_url = 'https:' + img_url
+            # 下载图片
+            img_data = requests.get(img_url).content
+
+        return img_data
 
     # 设置图片尺寸
     def resize_images(self, images, size):

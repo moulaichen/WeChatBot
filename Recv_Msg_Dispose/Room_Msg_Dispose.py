@@ -314,6 +314,15 @@ class Room_Msg_Dispose:
             forMe = f'群聊：{room_name}\n查看了今日二维码'
             self.wcf.send_text(msg=forMe, receiver="48265783292@chatroom")
 
+        # 天气
+        if self.judge_keyword(keyword=["天气"], msg=msg.content.strip(), list_bool=True, split_bool=True):
+            tianQi_msg = msg.content.strip().split(' ', 1)[1]
+            save_path = self.Ams.get_weather_image(tianQi_msg)
+            self.wcf.send_image(path=save_path, receiver=msg.roomid)
+            room_name = self.Dms.query_room_name(room_id=msg.roomid)
+            forMe = f'群聊：{room_name}\n查看了天气'
+            self.wcf.send_text(msg=forMe, receiver="48265783292@chatroom")
+
         if self.judge_keyword(keyword=["美女", "妹子", "小姐姐", "小迷妹", "宝贝", "宝贝儿"], msg=msg.content.strip(),
                               list_bool=True,
                               equal_bool=True):

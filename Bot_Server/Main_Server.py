@@ -78,8 +78,7 @@ class Main_Server:
             try:
                 # 拿到每一条消息
                 msg = wcf.get_msg()
-                save_image_qun_id = self.save_image_qun
-                if (msg.roomid == "" and msg.type == 3) or msg.type == 1 or msg.roomid in save_image_qun_id:
+                if (msg.roomid == "" and msg.type == 3) or msg.type == 1 or msg.roomid in self.save_image_qun:
                     OutPut.outPut('[收到消息]: ' + str(msg))
                 # 拿到推送群聊
                 push_rooms = self.Dms.show_push_rooms()
