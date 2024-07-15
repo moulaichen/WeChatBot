@@ -214,8 +214,8 @@ class Room_Msg_Dispose:
             send_msg = self.Ams.get_safety_news()
             self.wcf.send_text(msg=send_msg, receiver=msg.roomid)
         # 添加白名单公众号
-        elif msg.type == 49:
-            Thread(target=self.add_white_gh, name="添加白名单公众号", args=(msg,)).start()
+        # elif msg.type == 49:
+        #     Thread(target=self.add_white_gh, name="添加白名单公众号", args=(msg,)).start()
         Thread(target=self.OrdinaryRoom_Function, name="普通群聊功能", args=(msg, at_user_lists)).start()
 
     # 白名单群聊功能
