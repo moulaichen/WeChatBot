@@ -168,17 +168,6 @@ class Friend_Msg_Dispose:
             # if status == 0:
             #     self.wcf.send_text(f'图片转发自：{self.wcf.get_info_by_wxid(msg.sender).get("name")}', administrator)
 
-    def forward_ltjl(self, msg):
-        for i in range(10):
-            if i == 1:
-                sleep(3)
-                self.wcf.forward_msg(id=msg.id, receiver="48265783292@chatroom")
-                OutPut.outPut("推送")
-            elif i == 9:
-                sleep(5)
-                self.wcf.forward_msg(id=msg.id, receiver="43853325508@chatroom")
-                OutPut.outPut("测试")
-
     def forward_qunmsg(self, msg):
         save_path = self.save_wei_image(msg)
         isTure = True

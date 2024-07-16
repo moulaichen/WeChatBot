@@ -115,6 +115,7 @@ class Room_Msg_Dispose:
         self.game_answer = {}
         self.game_success = {}
         self.idiom_pic = {}
+
         # 创建一个线程锁
         self.counter_lock = threading.Lock()
 

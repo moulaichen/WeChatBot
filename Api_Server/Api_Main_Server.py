@@ -113,6 +113,7 @@ class Api_Main_Server:
         # 千帆配置
         self.qf_ak = config['Api_Server']['Ai_Config']['QianFan']['Qf_Access_Key']
         self.qf_sk = config['Api_Server']['Ai_Config']['QianFan']['Qf_Secret_Key']
+        self.user_message = {}
         if self.qf_ak and self.qf_sk:
             self.chat_comp = qianfan.ChatCompletion(ak=self.qf_ak,
                                                     sk=self.qf_sk)
@@ -212,7 +213,11 @@ class Api_Main_Server:
 
         def get_chat_gpt_response(content):
             dream = content.split(' ')[-1]
-
+            if self.wcf.self_wxid not in self.user_message:
+                self.user_message[self.wcf.self_wxid] = []
+            context = self.user_message[self.wcf.self_wxid]
+            context.append(dream)
+            context_str = ", ".join(context)
             url = "https://api.gptnb.me/v1/chat/completions"
             headers = {
                 "Authorization": "sk-644L7NISmmgj7SsD5036D1A173B149F2B8571c1883956b42",
@@ -242,7 +247,7 @@ class Api_Main_Server:
                 "model": "deepseek-coder",
                 "messages": [{"role": "system",
                               "content": prompt},
-                             {"role": "user", "content": dream}]
+                             {"role": "user", "content": context_str}]
             }
             response = requests.post(url, headers=headers, json=data)
             json_data = response.json()
